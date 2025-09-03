@@ -1,6 +1,6 @@
-import { useEffect, useState } from "react";
-import { useTick } from "@pixi/react";
-import { Texture, Assets } from "pixi.js";
+import { useEffect, useState } from 'react';
+import { useTick } from '@pixi/react';
+import { Texture, Assets } from 'pixi.js';
 
 function Scene() {
   const [uiTexture, setUiTexture] = useState<Texture | null>(null);
@@ -9,10 +9,10 @@ function Scene() {
 
   useEffect(() => {
     let isMounted = true;
-    Assets.load("/assets/main/ui.png").then((res) => {
+    Assets.load('/assets/main/ui.png').then((res) => {
       if (!isMounted) return;
       const tex =
-        res instanceof Texture ? res : Texture.from("/assets/main/ui.png");
+        res instanceof Texture ? res : Texture.from('/assets/main/ui.png');
       setUiTexture(tex);
     });
     return () => {
@@ -37,7 +37,7 @@ function Scene() {
           g.rect(0, 0, 120, 80);
           g.fill();
         }}
-        eventMode="static"
+        eventMode='static'
         rotation={rotation}
         onMouseEnter={() => setIsSpinning(true)}
         onMouseLeave={() => setIsSpinning(false)}
@@ -45,7 +45,7 @@ function Scene() {
 
       {uiTexture && (
         <pixiSprite
-          eventMode="static"
+          eventMode='static'
           texture={uiTexture}
           x={600}
           y={400}
@@ -59,7 +59,7 @@ function Scene() {
       )}
 
       <pixiText
-        text="Hello World!"
+        text='Hello World!'
         x={100}
         y={100}
         onMouseEnter={() => setIsSpinning(true)}
@@ -67,8 +67,8 @@ function Scene() {
         rotation={rotation}
         style={{
           fontSize: 32,
-          fill: "#ffffff",
-          fontFamily: "Arial",
+          fill: '#ffffff',
+          fontFamily: 'Arial',
         }}
       />
     </pixiContainer>

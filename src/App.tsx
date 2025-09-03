@@ -1,6 +1,6 @@
-import { Application, extend } from "@pixi/react";
-import { Container, Sprite, Graphics, Text } from "pixi.js";
-import Scene from "./Scene";
+import { Application, extend } from '@pixi/react';
+import { Container, Sprite, Graphics, Text } from 'pixi.js';
+import Scene from './Scene';
 
 extend({
   Container,
@@ -16,8 +16,8 @@ function App() {
       resizeTo={window}
       defaultTextStyle={{
         fontSize: 24,
-        fill: "#fff",
-        align: "center",
+        fill: '#fff',
+        align: 'center',
       }}
     >
       <Scene />
