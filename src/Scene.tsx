@@ -1,11 +1,13 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useTick } from '@pixi/react';
 import { Texture, Assets } from 'pixi.js';
+import { Howl } from 'howler';
 
 function Scene() {
   const [uiTexture, setUiTexture] = useState<Texture | null>(null);
   const [isSpinning, setIsSpinning] = useState(false);
   const [rotation, setRotation] = useState(0);
+  const hoverSoundRef = useRef<Howl | null>(null);
 
   useEffect(() => {
     let isMounted = true;
@@ -19,6 +21,34 @@ function Scene() {
       isMounted = false;
     };
   }, []);
+
+  useEffect(() => {
+    const sound = new Howl({
+      src: [
+        '/assets/main/sounds/sfx-hover.mp3',
+        '/assets/main/sounds/sfx-hover.ogg',
+      ],
+      volume: 0.5,
+      preload: true,
+    });
+    hoverSoundRef.current = sound;
+    return () => {
+      sound.unload();
+      hoverSoundRef.current = null;
+    };
+  }, []);
+
+  const handleMouseEnter = () => {
+    setIsSpinning(true);
+    const sound = hoverSoundRef.current;
+    if (sound) {
+      // avoid stacking many overlapping instances
+      if (sound.playing()) {
+        sound.stop();
+      }
+      sound.play();
+    }
+  };
 
   useTick(() => {
     if (isSpinning) {
@@ -39,7 +69,7 @@ function Scene() {
         }}
         eventMode='static'
         rotation={rotation}
-        onMouseEnter={() => setIsSpinning(true)}
+        onMouseEnter={handleMouseEnter}
         onMouseLeave={() => setIsSpinning(false)}
       />
 
@@ -53,7 +83,7 @@ function Scene() {
           width={200}
           height={200}
           rotation={rotation}
-          onMouseEnter={() => setIsSpinning(true)}
+          onMouseEnter={handleMouseEnter}
           onMouseLeave={() => setIsSpinning(false)}
         />
       )}
@@ -62,7 +92,7 @@ function Scene() {
         text='Hello World!'
         x={100}
         y={100}
-        onMouseEnter={() => setIsSpinning(true)}
+        onMouseEnter={handleMouseEnter}
         onMouseLeave={() => setIsSpinning(false)}
         rotation={rotation}
         style={{
