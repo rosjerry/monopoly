@@ -1,8 +1,21 @@
+import { Application as AppR, extend } from "@pixi/react"
+import { Application as AppN, Assets, Container, Sprite, Graphics} from 'pixi.js'
+
+
+extend({
+  Container,
+  Graphics,
+  Sprite,
+});
+
+
 function App() {
 
   return (
-    <h1>Hello</h1>
+    <AppR backgroundColor={"#922724"} resizeTo={window}>
+      
+    </AppR>
   )
 }
 
-export default App
+export default App;
