@@ -11,12 +11,13 @@
   },
   "dependencies": {
     "@esotericsoftware/spine-pixi-v8": "^4.2.74",
+    "@pixi/react": "^8.0.3",
     "@pixi/sound": "^6.0.1",
     "@pixi/ui": "^2.2.2",
     "gsap": "^3.13.0",
     "howler": "^2.2.4",
     "motion": "^12.4.7",
-    "pixi.js": "^8.8.1"
+    "pixi.js": "^8.13.0"
   },
   "devDependencies": {
     "@assetpack/core": "^1.4.0",
