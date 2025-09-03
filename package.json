@@ -12,6 +12,7 @@
   },
   "dependencies": {
     "@esotericsoftware/spine-pixi-v8": "^4.2.74",
+    "@gsap/react": "^2.1.2",
     "@pixi/react": "^8.0.3",
     "@pixi/sound": "^6.0.1",
     "@pixi/ui": "^2.2.2",
