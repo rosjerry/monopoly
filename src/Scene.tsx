@@ -6,11 +6,12 @@ import { gsap } from 'gsap';
 function Scene() {
   const [uiTexture, setUiTexture] = useState<Texture | null>(null);
   const [audioTexture, setAudioTexture] = useState<Texture | null>(null);
+  const [audioEnabled, setAudioEnabled] = useState<boolean>(false);
   const hoverSoundRef = useRef<Howl | null>(null);
+  const bgmSoundRef = useRef<Howl | null>(null);
   const graphicsRef = useRef<any>(null);
   const spriteRef = useRef<any>(null);
   const textRef = useRef<any>(null);
-  const stripeRef = useRef<any>(null);
   const audioSpriteRef = useRef<any>(null);
   const audioTextRef = useRef<any>(null);
 
@@ -57,6 +58,20 @@ function Scene() {
   }, []);
 
   useEffect(() => {
+    const bgm = new Howl({
+      src: ['/assets/main/sounds/komari.mp3'],
+      volume: 0.3,
+      loop: true,
+      preload: true,
+    });
+    bgmSoundRef.current = bgm;
+    return () => {
+      bgm.unload();
+      bgmSoundRef.current = null;
+    };
+  }, []);
+
+  useEffect(() => {
     if (graphicsRef.current) {
       graphicsRef.current.pivot.set(25, 25);
     }
@@ -64,12 +79,14 @@ function Scene() {
 
   const handleMouseEnter = (elementRef: React.RefObject<any>) => {
     startSpinning(elementRef);
-    const sound = hoverSoundRef.current;
-    if (sound) {
-      if (sound.playing()) {
-        sound.stop();
+    if (audioEnabled) {
+      const sound = hoverSoundRef.current;
+      if (sound) {
+        if (sound.playing()) {
+          sound.stop();
+        }
+        sound.play();
       }
-      sound.play();
     }
   };
 
@@ -91,6 +108,20 @@ function Scene() {
   const stopSpinning = (elementRef: React.RefObject<any>) => {
     if (elementRef.current) {
       gsap.killTweensOf(elementRef.current);
+    }
+  };
+
+  const toggleAudio = () => {
+    const newAudioState = !audioEnabled;
+    setAudioEnabled(newAudioState);
+    
+    const bgm = bgmSoundRef.current;
+    if (bgm) {
+      if (newAudioState) {
+        bgm.play();
+      } else {
+        bgm.stop();
+      }
     }
   };
 
@@ -151,12 +182,14 @@ function Scene() {
           anchor={{ x: 0.5, y: 0.5 }}
           width={100}
           height={100}
+          eventMode='static'
+          onPointerDown={toggleAudio}
         />
       )}
 
       <pixiText
         ref={audioTextRef}
-        text='click anywhere to enable audio'
+        text={audioEnabled ? 'click to disable audio' : 'click to enable audio'}
         x={window.innerWidth - 170}
         y={50}
         anchor={{ x: 0.5, y: 0.5 }}
