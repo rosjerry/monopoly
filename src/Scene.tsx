@@ -1,13 +1,14 @@
 import { useEffect, useRef, useState } from 'react';
-import { useTick } from '@pixi/react';
 import { Texture, Assets } from 'pixi.js';
 import { Howl } from 'howler';
+import { gsap } from 'gsap';
 
 function Scene() {
   const [uiTexture, setUiTexture] = useState<Texture | null>(null);
-  const [isSpinning, setIsSpinning] = useState(false);
-  const [rotation, setRotation] = useState(0);
   const hoverSoundRef = useRef<Howl | null>(null);
+  const graphicsRef = useRef<any>(null);
+  const spriteRef = useRef<any>(null);
+  const textRef = useRef<any>(null);
 
   useEffect(() => {
     let isMounted = true;
@@ -38,11 +39,10 @@ function Scene() {
     };
   }, []);
 
-  const handleMouseEnter = () => {
-    setIsSpinning(true);
+  const handleMouseEnter = (elementRef: React.RefObject<any>) => {
+    startSpinning(elementRef);
     const sound = hoverSoundRef.current;
     if (sound) {
-      // avoid stacking many overlapping instances
       if (sound.playing()) {
         sound.stop();
       }
@@ -50,15 +50,31 @@ function Scene() {
     }
   };
 
-  useTick(() => {
-    if (isSpinning) {
-      setRotation((r) => r + 0.05);
+  const handleMouseLeave = (elementRef: React.RefObject<any>) => {
+    stopSpinning(elementRef);
+  };
+
+  const startSpinning = (elementRef: React.RefObject<any>) => {
+    if (elementRef.current) {
+      gsap.to(elementRef.current, {
+        rotation: "+=6.28",
+        duration: 1,
+        ease: "none",
+        repeat: -1
+      });
     }
-  });
+  };
+
+  const stopSpinning = (elementRef: React.RefObject<any>) => {
+    if (elementRef.current) {
+      gsap.killTweensOf(elementRef.current);
+    }
+  };
 
   return (
     <pixiContainer x={0} y={0}>
       <pixiGraphics
+        ref={graphicsRef}
         x={100}
         y={200}
         draw={(g) => {
@@ -68,33 +84,33 @@ function Scene() {
           g.fill();
         }}
         eventMode='static'
-        rotation={rotation}
-        onMouseEnter={handleMouseEnter}
-        onMouseLeave={() => setIsSpinning(false)}
+        onMouseEnter={() => handleMouseEnter(graphicsRef)}
+        onMouseLeave={() => handleMouseLeave(graphicsRef)}
       />
 
       {uiTexture && (
         <pixiSprite
+          ref={spriteRef}
           eventMode='static'
           texture={uiTexture}
           x={600}
           y={400}
-          anchor={{ x: 0, y: 0 }}
+          anchor={{ x: 0.5, y: 0.5 }}
           width={200}
           height={200}
-          rotation={rotation}
-          onMouseEnter={handleMouseEnter}
-          onMouseLeave={() => setIsSpinning(false)}
+          onMouseEnter={() => handleMouseEnter(spriteRef)}
+          onMouseLeave={() => handleMouseLeave(spriteRef)}
         />
       )}
 
       <pixiText
+        ref={textRef}
         text='Hello World!'
         x={100}
         y={100}
-        onMouseEnter={handleMouseEnter}
-        onMouseLeave={() => setIsSpinning(false)}
-        rotation={rotation}
+        anchor={{ x: 0.5, y: 0.5 }}
+        onMouseEnter={() => handleMouseEnter(textRef)}
+        onMouseLeave={() => handleMouseLeave(textRef)}
         style={{
           fontSize: 32,
           fill: '#ffffff',
