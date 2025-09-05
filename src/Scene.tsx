@@ -5,10 +5,14 @@ import { gsap } from 'gsap';
 
 function Scene() {
   const [uiTexture, setUiTexture] = useState<Texture | null>(null);
+  const [audioTexture, setAudioTexture] = useState<Texture | null>(null);
   const hoverSoundRef = useRef<Howl | null>(null);
   const graphicsRef = useRef<any>(null);
   const spriteRef = useRef<any>(null);
   const textRef = useRef<any>(null);
+  const stripeRef = useRef<any>(null);
+  const audioSpriteRef = useRef<any>(null);
+  const audioTextRef = useRef<any>(null);
 
   useEffect(() => {
     let isMounted = true;
@@ -17,6 +21,19 @@ function Scene() {
       const tex =
         res instanceof Texture ? res : Texture.from('/assets/main/ui.png');
       setUiTexture(tex);
+    });
+    return () => {
+      isMounted = false;
+    };
+  }, []);
+
+  useEffect(() => {
+    let isMounted = true;
+    Assets.load('/assets/main/audio.png').then((res) => {
+      if (!isMounted) return;
+      const tex =
+        res instanceof Texture ? res : Texture.from('/assets/main/audio.png');
+      setAudioTexture(tex);
     });
     return () => {
       isMounted = false;
@@ -120,6 +137,31 @@ function Scene() {
         onMouseLeave={() => handleMouseLeave(textRef)}
         style={{
           fontSize: 32,
+          fill: '#ffffff',
+          fontFamily: 'Arial',
+        }}
+      />
+
+      {audioTexture && (
+        <pixiSprite
+          ref={audioSpriteRef}
+          texture={audioTexture}
+          x={window.innerWidth - 100}
+          y={100}
+          anchor={{ x: 0.5, y: 0.5 }}
+          width={100}
+          height={100}
+        />
+      )}
+
+      <pixiText
+        ref={audioTextRef}
+        text='click anywhere to enable audio'
+        x={window.innerWidth - 170}
+        y={50}
+        anchor={{ x: 0.5, y: 0.5 }}
+        style={{
+          fontSize: 24,
           fill: '#ffffff',
           fontFamily: 'Arial',
         }}
