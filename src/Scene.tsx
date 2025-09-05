@@ -39,6 +39,12 @@ function Scene() {
     };
   }, []);
 
+  useEffect(() => {
+    if (graphicsRef.current) {
+      graphicsRef.current.pivot.set(25, 25);
+    }
+  }, []);
+
   const handleMouseEnter = (elementRef: React.RefObject<any>) => {
     startSpinning(elementRef);
     const sound = hoverSoundRef.current;
@@ -75,12 +81,12 @@ function Scene() {
     <pixiContainer x={0} y={0}>
       <pixiGraphics
         ref={graphicsRef}
-        x={100}
-        y={200}
+        x={700}
+        y={700}
         draw={(g) => {
           g.clear();
           g.fill(0x00ff00);
-          g.rect(0, 0, 120, 80);
+          g.rect(0, 0, 50, 50);
           g.fill();
         }}
         eventMode='static'
@@ -109,6 +115,7 @@ function Scene() {
         x={100}
         y={100}
         anchor={{ x: 0.5, y: 0.5 }}
+        eventMode='static'
         onMouseEnter={() => handleMouseEnter(textRef)}
         onMouseLeave={() => handleMouseLeave(textRef)}
         style={{
