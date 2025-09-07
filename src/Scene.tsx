@@ -1,24 +1,19 @@
 import { useEffect, useRef, useState } from 'react';
 import { Texture, Assets } from 'pixi.js';
 import { Howl } from 'howler';
-import { gsap } from 'gsap';
-import { useBoardState } from './hooks/useBoardState';
+import { useGameController } from './hooks/useGameController';
 
 function Scene() {
   const [audioTexture, setAudioTexture] = useState<Texture | null>(null);
   const [audioEnabled, setAudioEnabled] = useState<boolean>(false);
-  const [selectedIndex, setSelectedIndex] = useState<number>(0);
+  const [selectedIndex] = useState<number>(0);
   const hoverSoundRef = useRef<Howl | null>(null);
   const bgmSoundRef = useRef<Howl | null>(null);
   const graphicsRef = useRef<any>(null);
   const audioSpriteRef = useRef<any>(null);
   const audioTextRef = useRef<any>(null);
 
-  const {
-    boardState,
-    generateBoard,
-    isMockMode: isMockModeBoard,
-  } = useBoardState();
+  const game = useGameController();
 
   useEffect(() => {
     let isMounted = true;
@@ -69,15 +64,13 @@ function Scene() {
     }
   }, []);
 
-  useEffect(() => {
-    generateBoard();
-  }, []);
+  // board provided by controller
 
   useEffect(() => {
-    if (!boardState.board) return;
-    const value = boardState.board[selectedIndex];
+    if (!game.board) return;
+    const value = game.board[selectedIndex];
     console.log('Selected board cell:', value);
-  }, [boardState.board, selectedIndex]);
+  }, [game.board, selectedIndex]);
 
   const toggleAudio = () => {
     const newAudioState = !audioEnabled;
@@ -124,7 +117,7 @@ function Scene() {
 
       {/* Balance Display */}
       <pixiText
-        text={`Balance: ${`0`}`}
+        text={`Balance: ${game.balance}`}
         x={100}
         y={80}
         anchor={{ x: 0, y: 0.5 }}
@@ -150,7 +143,7 @@ function Scene() {
           g.stroke();
         }}
         eventMode='static'
-        onPointerDown={() => console.log("dice roll")}
+        onPointerDown={() => game.roll()}
         cursor='pointer'
       />
 
@@ -166,23 +159,51 @@ function Scene() {
         }}
       />
 
+      <pixiGraphics
+        x={240}
+        y={200}
+        draw={(g) => {
+          g.clear();
+          g.fill(0xe74c3c);
+          g.rect(0, 0, 120, 40);
+          g.fill();
+          g.stroke({ color: 0xffffff, width: 2 });
+          g.rect(0, 0, 120, 40);
+          g.stroke();
+        }}
+        eventMode='static'
+        onPointerDown={() => game.reset()}
+        cursor='pointer'
+      />
+      <pixiText
+        text={"Reset"}
+        x={300}
+        y={220}
+        anchor={{ x: 0.5, y: 0.5 }}
+        style={{
+          fontSize: 16,
+          fill: '#ffffff',
+          fontFamily: 'Arial',
+        }}
+      />
+
 
       <pixiText
-        text={`Board Mode: ${isMockModeBoard ? 'Mock (Local)' : 'Backend'}`}
+        text={`Board Mode: ${game.isMockMode ? 'Mock (Local)' : 'Backend'}`}
         x={300}
         y={170}
         anchor={{ x: 0, y: 0.5 }}
         style={{
           fontSize: 14,
-          fill: isMockModeBoard ? '#00ff00' : '#ff6b6b',
+          fill: game.isMockMode ? '#00ff00' : '#ff6b6b',
           fontFamily: 'Arial',
         }}
       />
 
       {/* Selected Cell Display */}
-      {boardState.board && (
+      {game.board && (
         <pixiText
-          text={`Selected: ${boardState.board[selectedIndex]}`}
+          text={`Selected: ${game.board[selectedIndex]}`}
           x={300}
           y={140}
           anchor={{ x: 0, y: 0.5 }}
@@ -195,7 +216,7 @@ function Scene() {
         />
       )}
 
-      {boardState.board && (
+      {game.board && (
         <>
           {(() => {
             const cellSize = 60;
@@ -248,7 +269,7 @@ function Scene() {
             return (
               <>
                 {centerNode}
-                {boardState.board.map((cell, index) => {
+                {game.board.map((cell, index) => {
                   const { row, col } = positions[index];
                   const x = startX + col * total;
                   const y = startY + row * total;
