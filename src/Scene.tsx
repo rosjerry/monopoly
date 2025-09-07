@@ -70,6 +70,12 @@ function Scene() {
     }
   }, []);
 
+  // Initialize board once on mount
+  useEffect(() => {
+    generateBoard();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
   const toggleAudio = () => {
     const newAudioState = !audioEnabled;
     setAudioEnabled(newAudioState);
@@ -193,33 +199,6 @@ function Scene() {
         }}
       />
 
-      <pixiGraphics
-        x={300}
-        y={200}
-        draw={(g) => {
-          g.clear();
-          g.fill(0x8e44ad);
-          g.rect(0, 0, 160, 40);
-          g.fill();
-          g.stroke({ color: 0xffffff, width: 2 });
-          g.rect(0, 0, 160, 40);
-          g.stroke();
-        }}
-        eventMode='static'
-        onPointerDown={generateBoard}
-        cursor='pointer'
-      />
-      <pixiText
-        text={boardState.isLoading ? 'Generating...' : 'Generate Board'}
-        x={380}
-        y={220}
-        anchor={{ x: 0.5, y: 0.5 }}
-        style={{
-          fontSize: 16,
-          fill: '#ffffff',
-          fontFamily: 'Arial',
-        }}
-      />
 
       <pixiText
         text={`Board Mode: ${isMockModeBoard ? 'Mock (Local)' : 'Backend'}`}
