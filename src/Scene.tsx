@@ -3,33 +3,23 @@ import { Texture, Assets } from 'pixi.js';
 import { Howl } from 'howler';
 import { gsap } from 'gsap';
 import { useDiceState } from './hooks/useDiceState';
+import { useBoardState } from './hooks/useBoardState';
 
 function Scene() {
-  const [uiTexture, setUiTexture] = useState<Texture | null>(null);
   const [audioTexture, setAudioTexture] = useState<Texture | null>(null);
   const [audioEnabled, setAudioEnabled] = useState<boolean>(false);
   const hoverSoundRef = useRef<Howl | null>(null);
   const bgmSoundRef = useRef<Howl | null>(null);
   const graphicsRef = useRef<any>(null);
-  const spriteRef = useRef<any>(null);
-  const textRef = useRef<any>(null);
   const audioSpriteRef = useRef<any>(null);
   const audioTextRef = useRef<any>(null);
-  
-  const { diceState, rollDice, isMockMode } = useDiceState();
 
-  useEffect(() => {
-    let isMounted = true;
-    Assets.load('/assets/main/ui.png').then((res) => {
-      if (!isMounted) return;
-      const tex =
-        res instanceof Texture ? res : Texture.from('/assets/main/ui.png');
-      setUiTexture(tex);
-    });
-    return () => {
-      isMounted = false;
-    };
-  }, []);
+  const { diceState, rollDice, isMockMode } = useDiceState();
+  const {
+    boardState,
+    generateBoard,
+    isMockMode: isMockModeBoard,
+  } = useBoardState();
 
   useEffect(() => {
     let isMounted = true;
@@ -80,44 +70,10 @@ function Scene() {
     }
   }, []);
 
-  const handleMouseEnter = (elementRef: React.RefObject<any>) => {
-    startSpinning(elementRef);
-    if (audioEnabled) {
-      const sound = hoverSoundRef.current;
-      if (sound) {
-        if (sound.playing()) {
-          sound.stop();
-        }
-        sound.play();
-      }
-    }
-  };
-
-  const handleMouseLeave = (elementRef: React.RefObject<any>) => {
-    stopSpinning(elementRef);
-  };
-
-  const startSpinning = (elementRef: React.RefObject<any>) => {
-    if (elementRef.current) {
-      gsap.to(elementRef.current, {
-        rotation: "+=6.28",
-        duration: 1,
-        ease: "none",
-        repeat: -1
-      });
-    }
-  };
-
-  const stopSpinning = (elementRef: React.RefObject<any>) => {
-    if (elementRef.current) {
-      gsap.killTweensOf(elementRef.current);
-    }
-  };
-
   const toggleAudio = () => {
     const newAudioState = !audioEnabled;
     setAudioEnabled(newAudioState);
-    
+
     const bgm = bgmSoundRef.current;
     if (bgm) {
       if (newAudioState) {
@@ -130,52 +86,6 @@ function Scene() {
 
   return (
     <pixiContainer x={0} y={0}>
-      <pixiGraphics
-        ref={graphicsRef}
-        x={700}
-        y={700}
-        draw={(g) => {
-          g.clear();
-          g.fill(0x00ff00);
-          g.rect(0, 0, 50, 50);
-          g.fill();
-        }}
-        eventMode='static'
-        onMouseEnter={() => handleMouseEnter(graphicsRef)}
-        onMouseLeave={() => handleMouseLeave(graphicsRef)}
-      />
-
-      {uiTexture && (
-        <pixiSprite
-          ref={spriteRef}
-          eventMode='static'
-          texture={uiTexture}
-          x={600}
-          y={400}
-          anchor={{ x: 0.5, y: 0.5 }}
-          width={200}
-          height={200}
-          onMouseEnter={() => handleMouseEnter(spriteRef)}
-          onMouseLeave={() => handleMouseLeave(spriteRef)}
-        />
-      )}
-
-      <pixiText
-        ref={textRef}
-        text='Hello World!'
-        x={100}
-        y={100}
-        anchor={{ x: 0.5, y: 0.5 }}
-        eventMode='static'
-        onMouseEnter={() => handleMouseEnter(textRef)}
-        onMouseLeave={() => handleMouseLeave(textRef)}
-        style={{
-          fontSize: 32,
-          fill: '#ffffff',
-          fontFamily: 'Arial',
-        }}
-      />
-
       {audioTexture && (
         <pixiSprite
           ref={audioSpriteRef}
@@ -233,7 +143,6 @@ function Scene() {
         }}
       />
 
-      {/* Dice Results Display */}
       {diceState.dice && (
         <>
           <pixiText
@@ -272,7 +181,6 @@ function Scene() {
         </>
       )}
 
-      {/* Mode Indicator */}
       <pixiText
         text={`Mode: ${isMockMode ? 'Mock (Local)' : 'Backend'}`}
         x={100}
@@ -284,6 +192,142 @@ function Scene() {
           fontFamily: 'Arial',
         }}
       />
+
+      <pixiGraphics
+        x={300}
+        y={200}
+        draw={(g) => {
+          g.clear();
+          g.fill(0x8e44ad);
+          g.rect(0, 0, 160, 40);
+          g.fill();
+          g.stroke({ color: 0xffffff, width: 2 });
+          g.rect(0, 0, 160, 40);
+          g.stroke();
+        }}
+        eventMode='static'
+        onPointerDown={generateBoard}
+        cursor='pointer'
+      />
+      <pixiText
+        text={boardState.isLoading ? 'Generating...' : 'Generate Board'}
+        x={380}
+        y={220}
+        anchor={{ x: 0.5, y: 0.5 }}
+        style={{
+          fontSize: 16,
+          fill: '#ffffff',
+          fontFamily: 'Arial',
+        }}
+      />
+
+      <pixiText
+        text={`Board Mode: ${isMockModeBoard ? 'Mock (Local)' : 'Backend'}`}
+        x={300}
+        y={170}
+        anchor={{ x: 0, y: 0.5 }}
+        style={{
+          fontSize: 14,
+          fill: isMockModeBoard ? '#00ff00' : '#ff6b6b',
+          fontFamily: 'Arial',
+        }}
+      />
+
+      {boardState.board && (
+        <>
+          {(() => {
+            const cellSize = 60;
+            const spacing = 20;
+            const total = cellSize + spacing;
+            const startX = 350;
+            const startY = 300;
+
+            const positions: { row: number; col: number }[] = [];
+            for (let c = 0; c < 5; c += 1) positions.push({ row: 0, col: c });
+            for (let r = 1; r < 4; r += 1) positions.push({ row: r, col: 4 });
+            for (let c = 4; c >= 0; c -= 1) positions.push({ row: 4, col: c });
+            for (let r = 3; r >= 1; r -= 1) positions.push({ row: r, col: 0 });
+
+            const centerTopLeftX = startX + total * 1;
+            const centerTopLeftY = startY + total * 1;
+            const centerWidth = total * 3 - spacing;
+            const centerHeight = total * 3 - spacing;
+
+            const centerNode = (
+              <>
+                <pixiGraphics
+                  x={centerTopLeftX}
+                  y={centerTopLeftY}
+                  draw={(g) => {
+                    g.clear();
+                    g.fill(0x1abc9c);
+                    g.rect(0, 0, centerWidth, centerHeight);
+                    g.fill();
+                    g.stroke({ color: 0x16a085, width: 4 });
+                    g.rect(0, 0, centerWidth, centerHeight);
+                    g.stroke();
+                  }}
+                />
+                <pixiText
+                  text={'monopoly'}
+                  x={centerTopLeftX + centerWidth / 2}
+                  y={centerTopLeftY + centerHeight / 2}
+                  anchor={{ x: 0.5, y: 0.5 }}
+                  style={{
+                    fontSize: 28,
+                    fill: '#ffffff',
+                    fontFamily: 'Arial',
+                    fontWeight: 'bold',
+                  }}
+                />
+              </>
+            );
+
+            return (
+              <>
+                {centerNode}
+                {boardState.board.map((cell, index) => {
+                  const { row, col } = positions[index];
+                  const x = startX + col * total;
+                  const y = startY + row * total;
+                  const isBonus = cell === 'bonus';
+                  return (
+                    <>
+                      <pixiGraphics
+                        key={`ring-bg-${index}`}
+                        x={x}
+                        y={y}
+                        draw={(g) => {
+                          g.clear();
+                          g.fill(isBonus ? 0xf39c12 : 0x8e44ad);
+                          g.rect(0, 0, cellSize, cellSize);
+                          g.fill();
+                          g.stroke({ color: 0x34495e, width: 2 });
+                          g.rect(0, 0, cellSize, cellSize);
+                          g.stroke();
+                        }}
+                      />
+                      <pixiText
+                        key={`ring-text-${index}`}
+                        text={`${cell}`}
+                        x={x + cellSize / 2}
+                        y={y + cellSize / 2}
+                        anchor={{ x: 0.5, y: 0.5 }}
+                        style={{
+                          fontSize: 16,
+                          fill: '#ffffff',
+                          fontFamily: 'Arial',
+                          fontWeight: 'bold',
+                        }}
+                      />
+                    </>
+                  );
+                })}
+              </>
+            );
+          })()}
+        </>
+      )}
     </pixiContainer>
   );
 }
