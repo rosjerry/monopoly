@@ -8,6 +8,7 @@ import { useBoardState } from './hooks/useBoardState';
 function Scene() {
   const [audioTexture, setAudioTexture] = useState<Texture | null>(null);
   const [audioEnabled, setAudioEnabled] = useState<boolean>(false);
+  const [selectedIndex, setSelectedIndex] = useState<number>(0);
   const hoverSoundRef = useRef<Howl | null>(null);
   const bgmSoundRef = useRef<Howl | null>(null);
   const graphicsRef = useRef<any>(null);
@@ -75,6 +76,20 @@ function Scene() {
     generateBoard();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+
+  // Advance selected square whenever dice result arrives
+  useEffect(() => {
+    if (!diceState.dice) return;
+    const steps = diceState.dice[0] + diceState.dice[1];
+    setSelectedIndex((prev) => (prev + steps) % 16);
+  }, [diceState.dice]);
+
+  // Log selected cell value when it changes
+  useEffect(() => {
+    if (!boardState.board) return;
+    const value = boardState.board[selectedIndex];
+    console.log('Selected board cell:', value);
+  }, [boardState.board, selectedIndex]);
 
   const toggleAudio = () => {
     const newAudioState = !audioEnabled;
@@ -212,6 +227,22 @@ function Scene() {
         }}
       />
 
+      {/* Selected Cell Display */}
+      {boardState.board && (
+        <pixiText
+          text={`Selected: ${boardState.board[selectedIndex]}`}
+          x={300}
+          y={140}
+          anchor={{ x: 0, y: 0.5 }}
+          style={{
+            fontSize: 16,
+            fill: '#ffffff',
+            fontFamily: 'Arial',
+            fontWeight: 'bold',
+          }}
+        />
+      )}
+
       {boardState.board && (
         <>
           {(() => {
@@ -270,6 +301,7 @@ function Scene() {
                   const x = startX + col * total;
                   const y = startY + row * total;
                   const isBonus = cell === 'bonus';
+                  const isSelected = index === selectedIndex;
                   return (
                     <>
                       <pixiGraphics
@@ -278,10 +310,12 @@ function Scene() {
                         y={y}
                         draw={(g) => {
                           g.clear();
-                          g.fill(isBonus ? 0xf39c12 : 0x8e44ad);
+                          const baseFill = isBonus ? 0xf39c12 : 0x8e44ad;
+                          const highlightFill = isBonus ? 0xffc04d : 0xa569bd;
+                          g.fill(isSelected ? highlightFill : baseFill);
                           g.rect(0, 0, cellSize, cellSize);
                           g.fill();
-                          g.stroke({ color: 0x34495e, width: 2 });
+                          g.stroke({ color: isSelected ? 0xffff00 : 0x34495e, width: isSelected ? 4 : 2 });
                           g.rect(0, 0, cellSize, cellSize);
                           g.stroke();
                         }}
@@ -293,8 +327,8 @@ function Scene() {
                         y={y + cellSize / 2}
                         anchor={{ x: 0.5, y: 0.5 }}
                         style={{
-                          fontSize: 16,
-                          fill: '#ffffff',
+                          fontSize: isSelected ? 18 : 16,
+                          fill: isSelected ? '#000000' : '#ffffff',
                           fontFamily: 'Arial',
                           fontWeight: 'bold',
                         }}
