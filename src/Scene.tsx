@@ -2,13 +2,11 @@ import { useEffect, useRef, useState } from 'react';
 import { Texture, Assets } from 'pixi.js';
 import { Howl } from 'howler';
 import { gsap } from 'gsap';
-import { useDiceState } from './hooks/useDiceState';
 import { useBoardState } from './hooks/useBoardState';
 
 function Scene() {
   const [audioTexture, setAudioTexture] = useState<Texture | null>(null);
   const [audioEnabled, setAudioEnabled] = useState<boolean>(false);
-  const [balance, setBalance] = useState<number>(100);
   const [selectedIndex, setSelectedIndex] = useState<number>(0);
   const hoverSoundRef = useRef<Howl | null>(null);
   const bgmSoundRef = useRef<Howl | null>(null);
@@ -16,7 +14,6 @@ function Scene() {
   const audioSpriteRef = useRef<any>(null);
   const audioTextRef = useRef<any>(null);
 
-  const { diceState, rollDice, isMockMode } = useDiceState();
   const {
     boardState,
     generateBoard,
@@ -72,43 +69,15 @@ function Scene() {
     }
   }, []);
 
-  // Initialize board once on mount
   useEffect(() => {
     generateBoard();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  // Advance selected square whenever dice result arrives and update balance
-  useEffect(() => {
-    if (!diceState.dice) return;
-    const steps = diceState.dice[0] + diceState.dice[1];
-    setSelectedIndex((prev) => {
-      const nextIndex = (prev + steps) % 16;
-      if (boardState.board) {
-        const landed = boardState.board[nextIndex];
-        const prize = typeof landed === 'number' ? landed : 0;
-        setBalance((prevBal) => prevBal - 50 + prize);
-        console.log('Balance update:', { prevBalance: undefined, steps, landed, prize });
-      }
-      return nextIndex;
-    });
-  }, [diceState.dice]);
-
-  // Log selected cell value when it changes
   useEffect(() => {
     if (!boardState.board) return;
     const value = boardState.board[selectedIndex];
     console.log('Selected board cell:', value);
   }, [boardState.board, selectedIndex]);
-
-  // Detect loss condition and refresh
-  useEffect(() => {
-    if (balance <= 0) {
-      // Simple JS prompt/alert then refresh
-      window.alert('you lost, try again');
-      window.location.reload();
-    }
-  }, [balance]);
 
   const toggleAudio = () => {
     const newAudioState = !audioEnabled;
@@ -155,7 +124,7 @@ function Scene() {
 
       {/* Balance Display */}
       <pixiText
-        text={`Balance: ${balance}`}
+        text={`Balance: ${`0`}`}
         x={100}
         y={80}
         anchor={{ x: 0, y: 0.5 }}
@@ -181,68 +150,18 @@ function Scene() {
           g.stroke();
         }}
         eventMode='static'
-        onPointerDown={rollDice}
+        onPointerDown={() => console.log("dice roll")}
         cursor='pointer'
       />
 
       <pixiText
-        text={diceState.isRolling ? 'Rolling...' : 'Roll Dice'}
+        text={"Roll dice"}
         x={160}
         y={220}
         anchor={{ x: 0.5, y: 0.5 }}
         style={{
           fontSize: 16,
           fill: '#ffffff',
-          fontFamily: 'Arial',
-        }}
-      />
-
-      {diceState.dice && (
-        <>
-          <pixiText
-            text={`Dice 1: ${diceState.dice[0]}`}
-            x={100}
-            y={280}
-            anchor={{ x: 0, y: 0.5 }}
-            style={{
-              fontSize: 20,
-              fill: '#ffffff',
-              fontFamily: 'Arial',
-            }}
-          />
-          <pixiText
-            text={`Dice 2: ${diceState.dice[1]}`}
-            x={100}
-            y={310}
-            anchor={{ x: 0, y: 0.5 }}
-            style={{
-              fontSize: 20,
-              fill: '#ffffff',
-              fontFamily: 'Arial',
-            }}
-          />
-          <pixiText
-            text={`Total: ${diceState.dice[0] + diceState.dice[1]}`}
-            x={100}
-            y={340}
-            anchor={{ x: 0, y: 0.5 }}
-            style={{
-              fontSize: 24,
-              fill: '#ffff00',
-              fontFamily: 'Arial',
-            }}
-          />
-        </>
-      )}
-
-      <pixiText
-        text={`Mode: ${isMockMode ? 'Mock (Local)' : 'Backend'}`}
-        x={100}
-        y={50}
-        anchor={{ x: 0, y: 0.5 }}
-        style={{
-          fontSize: 18,
-          fill: isMockMode ? '#00ff00' : '#ff6b6b',
           fontFamily: 'Arial',
         }}
       />
