@@ -1,0 +1,21 @@
+monopoly logic:
+array with 16 elements, 15 og them are numbers dividable by 5.
+for example 5, 25, 65, 45 and etc.
+one of them is string "bonus"
+if random selection after dice roll will reach exactly to "bonus", all other 15 items will be multiplied by 3.
+also player will get 3 free dice rolls, so coin balance will remain the same, 
+also bonus will be replaced by big amount of number to not give user chance to enter bonus mode again and win more.
+
+each dice roll costs for example 100 coins. (number can be changed during game creation process)
+this coins are gethered by user with dice rolling porcess, landing on specific square
+
+if user runs out a balande, game stops, user will have popup with "you lost" and "try again" button.
+when user click on try again, balance will be reseted, user continues to roll dice while have enough balance, 
+if wins bonus enters in bonus mode and etc...
+
+if user is in mock mode, he has warning that this is mock mode, coin balance comes from app initial state coins amount.
+bonus mode logic is managed entirely by react app state.
+
+if user is out of mock mode, user's mock game state will be deleted after warning (or saved in localstorage, will dicide during porcess)
+entire state of game will be ruled from backend, bonus mode, initial prizes, coin balance, free spins...
+game reset policy will be same in backend.
