@@ -8,6 +8,7 @@ import { useBoardState } from './hooks/useBoardState';
 function Scene() {
   const [audioTexture, setAudioTexture] = useState<Texture | null>(null);
   const [audioEnabled, setAudioEnabled] = useState<boolean>(false);
+  const [balance, setBalance] = useState<number>(100);
   const [selectedIndex, setSelectedIndex] = useState<number>(0);
   const hoverSoundRef = useRef<Howl | null>(null);
   const bgmSoundRef = useRef<Howl | null>(null);
@@ -77,11 +78,20 @@ function Scene() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  // Advance selected square whenever dice result arrives
+  // Advance selected square whenever dice result arrives and update balance
   useEffect(() => {
     if (!diceState.dice) return;
     const steps = diceState.dice[0] + diceState.dice[1];
-    setSelectedIndex((prev) => (prev + steps) % 16);
+    setSelectedIndex((prev) => {
+      const nextIndex = (prev + steps) % 16;
+      if (boardState.board) {
+        const landed = boardState.board[nextIndex];
+        const prize = typeof landed === 'number' ? landed : 0;
+        setBalance((prevBal) => prevBal - 50 + prize);
+        console.log('Balance update:', { prevBalance: undefined, steps, landed, prize });
+      }
+      return nextIndex;
+    });
   }, [diceState.dice]);
 
   // Log selected cell value when it changes
@@ -90,6 +100,15 @@ function Scene() {
     const value = boardState.board[selectedIndex];
     console.log('Selected board cell:', value);
   }, [boardState.board, selectedIndex]);
+
+  // Detect loss condition and refresh
+  useEffect(() => {
+    if (balance <= 0) {
+      // Simple JS prompt/alert then refresh
+      window.alert('you lost, try again');
+      window.location.reload();
+    }
+  }, [balance]);
 
   const toggleAudio = () => {
     const newAudioState = !audioEnabled;
@@ -131,6 +150,20 @@ function Scene() {
           fontSize: 24,
           fill: '#ffffff',
           fontFamily: 'Arial',
+        }}
+      />
+
+      {/* Balance Display */}
+      <pixiText
+        text={`Balance: ${balance}`}
+        x={100}
+        y={80}
+        anchor={{ x: 0, y: 0.5 }}
+        style={{
+          fontSize: 22,
+          fill: '#00e676',
+          fontFamily: 'Arial',
+          fontWeight: 'bold',
         }}
       />
 
