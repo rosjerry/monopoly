@@ -1,4 +1,6 @@
 import React from 'react';
+import { useResponsive } from '../hooks/useResponsive';
+import { ResponsiveLayout } from '../utils/responsiveLayout';
 
 interface GameInfoProps {
   board: (string | number)[] | null;
@@ -7,15 +9,19 @@ interface GameInfoProps {
 }
 
 const GameInfo: React.FC<GameInfoProps> = ({ board, currentIndex, isMockMode }) => {
+  const responsive = useResponsive();
+  const layout = new ResponsiveLayout(responsive);
+  const position = layout.getGameInfoPosition();
+  
   return (
     <>
       <pixiText
         text={`Board Mode: ${isMockMode ? 'Mock' : 'Real'}`}
-        x={300}
-        y={170}
+        x={position.x}
+        y={position.y + responsive.spacing.md}
         anchor={{ x: 0, y: 0.5 }}
         style={{
-          fontSize: 14,
+          fontSize: responsive.fontSize.small,
           fill: isMockMode ? '#00ff00' : '#ff6b6b',
           fontFamily: 'Arial',
         }}
@@ -24,11 +30,11 @@ const GameInfo: React.FC<GameInfoProps> = ({ board, currentIndex, isMockMode }) 
       {board && (
         <pixiText
           text={`Current Square: ${board[currentIndex]}`}
-          x={300}
-          y={140}
+          x={position.x}
+          y={position.y}
           anchor={{ x: 0, y: 0.5 }}
           style={{
-            fontSize: 16,
+            fontSize: responsive.fontSize.small,
             fill: '#ffffff',
             fontFamily: 'Arial',
             fontWeight: 'bold',

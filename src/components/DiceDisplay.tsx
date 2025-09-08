@@ -1,6 +1,8 @@
 import React, { useRef, useEffect, useState } from 'react';
 import { Texture, Assets } from 'pixi.js';
 import { gsap } from 'gsap';
+import { useResponsive } from '../hooks/useResponsive';
+import { ResponsiveLayout } from '../utils/responsiveLayout';
 
 interface DiceDisplayProps {
   displayDice: [number, number] | null;
@@ -13,6 +15,10 @@ const DiceDisplay: React.FC<DiceDisplayProps> = ({
   isSpinning, 
   onDiceTexturesLoaded 
 }) => {
+  const responsive = useResponsive();
+  const layout = new ResponsiveLayout(responsive);
+  const position = layout.getDicePosition();
+  
   const [diceTextures, setDiceTextures] = useState<Record<number, Texture> | null>(null);
   const dice1Ref = useRef<any>(null);
   const dice2Ref = useRef<any>(null);
@@ -91,25 +97,27 @@ const DiceDisplay: React.FC<DiceDisplayProps> = ({
     return null;
   }
 
+  const diceSize = responsive.isMobile ? 40 : responsive.isTablet ? 48 : 56;
+  
   return (
     <>
       <pixiSprite
         ref={dice1Ref}
         texture={diceTextureFor(displayDice[0])!}
-        x={200}
-        y={460}
+        x={position.x}
+        y={position.y}
         anchor={{ x: 0.5, y: 0.5 }}
-        width={56}
-        height={56}
+        width={diceSize}
+        height={diceSize}
       />
       <pixiSprite
         ref={dice2Ref}
         texture={diceTextureFor(displayDice[1])!}
-        x={280}
-        y={460}
+        x={position.x + diceSize + responsive.spacing.sm}
+        y={position.y}
         anchor={{ x: 0.5, y: 0.5 }}
-        width={56}
-        height={56}
+        width={diceSize}
+        height={diceSize}
       />
     </>
   );

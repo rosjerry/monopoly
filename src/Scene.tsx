@@ -4,6 +4,8 @@ import { gsap } from 'gsap';
 import { useGameController } from './hooks/useGameController';
 import { useNavigate, useSearchParams } from 'react-router';
 import { GAME_CONSTANTS } from './constants';
+import { useResponsive } from './hooks/useResponsive';
+import { debugLayout } from './utils/debugLayout';
 import { 
   BalanceDisplay, 
   ControlButtons, 
@@ -12,6 +14,7 @@ import {
   GameInfo, 
   ModeSwitcher 
 } from './components';
+import DebugOverlay from './components/DebugOverlay';
 
 function Scene() {
   const [currentIndex, setCurrentIndex] = useState<number>(0);
@@ -28,6 +31,13 @@ function Scene() {
   const [params] = useSearchParams();
   const [showModePopup, setShowModePopup] = useState<boolean>(false);
   const [pendingTargetMock, setPendingTargetMock] = useState<boolean | null>(null);
+  
+  const responsive = useResponsive();
+  
+  // Debug layout positioning
+  useEffect(() => {
+    debugLayout(responsive);
+  }, [responsive]);
 
   useEffect(() => {
     if (!game.board) return;
@@ -197,6 +207,9 @@ function Scene() {
         onApplyModeSwitch={applyModeSwitch}
         onCancelModeSwitch={cancelModeSwitch}
       />
+      
+      {/* Debug overlay - remove this after testing */}
+      <DebugOverlay />
     </pixiContainer>
   );
 }
