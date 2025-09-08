@@ -25,7 +25,7 @@ type MockGameState = GameStateResponse & {
 const initialRegular = createInitialBoard();
 
 export const useMockGameStore = create<MockGameState>((set, get) => ({
-  balance: 100,
+  balance: 500,
   dice_result: null,
   last_prize_won: null,
   available_to_spin: true,
@@ -94,7 +94,7 @@ export const useMockGameStore = create<MockGameState>((set, get) => ({
   },
   reset: () => {
     set({
-      balance: 100,
+      balance: 500,
       dice_result: null,
       last_prize_won: null,
       available_to_spin: true,
