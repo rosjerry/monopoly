@@ -1,3 +1,4 @@
+export { default as AudioToggle } from './AudioToggle';
 export { default as BalanceDisplay } from './BalanceDisplay';
 export { default as ControlButtons } from './ControlButtons';
 export { default as DiceDisplay } from './DiceDisplay';

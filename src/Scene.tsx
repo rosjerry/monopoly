@@ -6,7 +6,9 @@ import { useNavigate, useSearchParams } from 'react-router';
 import { GAME_CONSTANTS } from './constants';
 import { useResponsive } from './hooks/useResponsive';
 import { debugLayout } from './utils/debugLayout';
+import { useAudioStore } from './store/audioStore';
 import { 
+  AudioToggle,
   BalanceDisplay, 
   ControlButtons, 
   DiceDisplay, 
@@ -33,7 +35,14 @@ function Scene() {
   const [pendingTargetMock, setPendingTargetMock] = useState<boolean | null>(null);
   
   const responsive = useResponsive();
+  const { initializeSounds, playSound, setBackgroundMusic } = useAudioStore();
   
+  // Initialize audio system
+  useEffect(() => {
+    initializeSounds();
+    setBackgroundMusic('regular');
+  }, [initializeSounds, setBackgroundMusic]);
+
   // Debug layout positioning
   useEffect(() => {
     debugLayout(responsive);
@@ -43,7 +52,12 @@ function Scene() {
     if (!game.board) return;
     const value = game.board[currentIndex];
     console.log('Selected board cell:', value);
-  }, [game.board, currentIndex]);
+    
+    // Play bonus sound when landing on bonus square
+    if (value === 'bonus') {
+      playSound('bonus');
+    }
+  }, [game.board, currentIndex, playSound]);
 
   useEffect(() => {
     if (!game.isMockMode) return;
@@ -72,6 +86,22 @@ function Scene() {
       justResetRef.current = false;
     }
   }, [game.board]);
+
+  // Handle bonus mode background music
+  useEffect(() => {
+    if (game.bonusMode) {
+      setBackgroundMusic('bonus');
+    } else {
+      setBackgroundMusic('regular');
+    }
+  }, [game.bonusMode, setBackgroundMusic]);
+
+  // Handle game over sound
+  useEffect(() => {
+    if (!game.availableToSpin && !game.bonusMode) {
+      playSound('gameOver');
+    }
+  }, [game.availableToSpin, game.bonusMode, playSound]);
 
   const handleDiceTexturesLoaded = useCallback((textures: Record<number, Texture>) => {
     setDiceTextures(textures);
@@ -110,6 +140,9 @@ function Scene() {
 
     setBalanceDelta({ value: -GAME_CONSTANTS.ROLL_COST, color: '#ff6b6b' });
 
+    // Play dice sound on every roll
+    playSound('dice');
+    
     startDiceSpin();
     game.roll();
 
@@ -207,6 +240,8 @@ function Scene() {
         onApplyModeSwitch={applyModeSwitch}
         onCancelModeSwitch={cancelModeSwitch}
       />
+      
+      <AudioToggle />
       
       {/* Debug overlay - commented out */}
       {/* <DebugOverlay /> */}
