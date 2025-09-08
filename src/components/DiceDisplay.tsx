@@ -3,6 +3,7 @@ import { Texture, Assets } from 'pixi.js';
 import { gsap } from 'gsap';
 import { useResponsive } from '../hooks/useResponsive';
 import { ResponsiveLayout } from '../utils/responsiveLayout';
+import { animateDiceRoll, animateDiceBounce } from '../utils/animations';
 
 interface DiceDisplayProps {
   displayDice: [number, number] | null;
@@ -89,6 +90,12 @@ const DiceDisplay: React.FC<DiceDisplayProps> = ({
       if (diceTweensRef.current.t2) {
         diceTweensRef.current.t2.kill();
         diceTweensRef.current.t2 = null;
+      }
+      
+      // Add bounce animation when dice stop spinning
+      if (dice1Ref.current && dice2Ref.current) {
+        animateDiceBounce(dice1Ref.current);
+        animateDiceBounce(dice2Ref.current);
       }
     }
   }, [isSpinning]);
