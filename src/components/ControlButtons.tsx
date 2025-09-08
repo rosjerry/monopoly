@@ -2,6 +2,8 @@ import React from 'react';
 import { GAME_CONSTANTS } from '../constants';
 import { useResponsive } from '../hooks/useResponsive';
 import { ResponsiveLayout } from '../utils/responsiveLayout';
+import { gameStyles } from '../config/gameStyles';
+import { createTextStyle, createButtonStyle, createDisabledButtonStyle } from '../config/responsiveStyles';
 
 interface ControlButtonsProps {
   onRollClick: () => void;
@@ -24,6 +26,22 @@ const ControlButtons: React.FC<ControlButtonsProps> = ({
   
   const isDisabled = balance < GAME_CONSTANTS.ROLL_COST || isRolling || !availableToSpin;
   
+  // Create button styles
+  const spinButtonStyle = isDisabled 
+    ? createDisabledButtonStyle(responsive.styles)
+    : createButtonStyle(responsive.styles, 'primary');
+  
+  const resetButtonStyle = createButtonStyle(responsive.styles, 'danger');
+  
+  // Create text styles
+  const spinTextStyle = createTextStyle(
+    responsive.styles, 
+    'sm', 
+    isDisabled ? gameStyles.colors.ui.text.disabled : gameStyles.colors.ui.text.primary
+  );
+  
+  const resetTextStyle = createTextStyle(responsive.styles, 'sm', gameStyles.colors.ui.text.primary);
+  
   return (
     <>
       <pixiGraphics
@@ -31,11 +49,11 @@ const ControlButtons: React.FC<ControlButtonsProps> = ({
         y={position.y}
         draw={(g) => {
           g.clear();
-          g.fill(isDisabled ? 0x666666 : 0x4a90e2);
-          g.rect(0, 0, responsive.layout.buttonWidth, responsive.layout.buttonHeight);
+          g.fill(spinButtonStyle.fill);
+          g.rect(0, 0, spinButtonStyle.width, spinButtonStyle.height);
           g.fill();
-          g.stroke({ color: isDisabled ? 0x999999 : 0xffffff, width: responsive.isMobile ? 1 : 2 });
-          g.rect(0, 0, responsive.layout.buttonWidth, responsive.layout.buttonHeight);
+          g.stroke({ color: spinButtonStyle.stroke, width: spinButtonStyle.strokeWidth });
+          g.rect(0, 0, spinButtonStyle.width, spinButtonStyle.height);
           g.stroke();
         }}
         eventMode={isDisabled ? 'none' : 'static'}
@@ -45,26 +63,22 @@ const ControlButtons: React.FC<ControlButtonsProps> = ({
 
       <pixiText
         text={"Spin"}
-        x={position.x + responsive.layout.buttonWidth / 2}
-        y={position.y + responsive.layout.buttonHeight / 2}
+        x={position.x + spinButtonStyle.width / 2}
+        y={position.y + spinButtonStyle.height / 2}
         anchor={{ x: 0.5, y: 0.5 }}
-        style={{
-          fontSize: responsive.fontSize.small,
-          fill: isDisabled ? '#cccccc' : '#ffffff',
-          fontFamily: 'Arial',
-        }}
+        style={spinTextStyle}
       />
 
       <pixiGraphics
-        x={position.x + responsive.layout.buttonWidth + responsive.spacing.md}
+        x={position.x + spinButtonStyle.width + responsive.styles.spacing.md}
         y={position.y}
         draw={(g) => {
           g.clear();
-          g.fill(0xe74c3c);
-          g.rect(0, 0, responsive.layout.buttonWidth, responsive.layout.buttonHeight);
+          g.fill(resetButtonStyle.fill);
+          g.rect(0, 0, resetButtonStyle.width, resetButtonStyle.height);
           g.fill();
-          g.stroke({ color: 0xffffff, width: responsive.isMobile ? 1 : 2 });
-          g.rect(0, 0, responsive.layout.buttonWidth, responsive.layout.buttonHeight);
+          g.stroke({ color: resetButtonStyle.stroke, width: resetButtonStyle.strokeWidth });
+          g.rect(0, 0, resetButtonStyle.width, resetButtonStyle.height);
           g.stroke();
         }}
         eventMode='static'
@@ -74,14 +88,10 @@ const ControlButtons: React.FC<ControlButtonsProps> = ({
       
       <pixiText
         text={"Reset"}
-        x={position.x + responsive.layout.buttonWidth + responsive.spacing.md + responsive.layout.buttonWidth / 2}
-        y={position.y + responsive.layout.buttonHeight / 2}
+        x={position.x + spinButtonStyle.width + responsive.styles.spacing.md + resetButtonStyle.width / 2}
+        y={position.y + resetButtonStyle.height / 2}
         anchor={{ x: 0.5, y: 0.5 }}
-        style={{
-          fontSize: responsive.fontSize.small,
-          fill: '#ffffff',
-          fontFamily: 'Arial',
-        }}
+        style={resetTextStyle}
       />
     </>
   );

@@ -68,6 +68,28 @@ const DebugOverlay: React.FC = () => {
         }}
       />
       
+      {/* Dice center crosshair */}
+      <pixiGraphics
+        x={centerX - 10}
+        y={boardPos.y + responsive.layout.boardSize + responsive.styles.spacing.xl}
+        draw={(g) => {
+          g.clear();
+          g.stroke({ color: 0xffff00, width: 2 });
+          g.moveTo(0, 0);
+          g.lineTo(20, 0);
+        }}
+      />
+      <pixiGraphics
+        x={centerX}
+        y={boardPos.y + responsive.layout.boardSize + responsive.styles.spacing.xl - 10}
+        draw={(g) => {
+          g.clear();
+          g.stroke({ color: 0xffff00, width: 2 });
+          g.moveTo(0, 0);
+          g.lineTo(0, 20);
+        }}
+      />
+      
       {/* Debug text */}
       <pixiText
         text={`Screen: ${responsive.screenWidth}x${responsive.screenHeight}`}

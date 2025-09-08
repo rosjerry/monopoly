@@ -1,6 +1,8 @@
 import React from 'react';
 import { useResponsive } from '../hooks/useResponsive';
 import { ResponsiveLayout } from '../utils/responsiveLayout';
+import { gameStyles } from '../config/gameStyles';
+import { createTextStyle, createModeSwitcherStyle, createPopupStyle, createButtonStyle } from '../config/responsiveStyles';
 
 interface ModeSwitcherProps {
   isMockMode: boolean;
@@ -23,7 +25,14 @@ const ModeSwitcher: React.FC<ModeSwitcherProps> = ({
   const layout = new ResponsiveLayout(responsive);
   const position = layout.getModeSwitcherPosition();
   
-  const buttonSize = responsive.isMobile ? 24 : 28;
+  const modeSwitcherStyle = createModeSwitcherStyle(responsive.styles);
+  const modeTextStyle = createTextStyle(responsive.styles, 'sm', gameStyles.colors.ui.text.secondary, 'bold');
+  const popupStyle = createPopupStyle(responsive.styles);
+  const successButtonStyle = createButtonStyle(responsive.styles, 'success');
+  const dangerButtonStyle = createButtonStyle(responsive.styles, 'danger');
+  const popupTextStyle = createTextStyle(responsive.styles, 'md', gameStyles.colors.ui.text.primary, 'bold');
+  const warningTextStyle = createTextStyle(responsive.styles, 'sm', gameStyles.colors.ui.text.warning);
+  const buttonTextStyle = createTextStyle(responsive.styles, 'sm', gameStyles.colors.ui.text.primary, 'bold');
   
   return (
     <>
@@ -32,11 +41,11 @@ const ModeSwitcher: React.FC<ModeSwitcherProps> = ({
         y={position.y}
         draw={(g) => {
           g.clear();
-          g.fill(0x2c3e50, 0.9);
-          g.circle(0, 0, buttonSize);
+          g.fill(modeSwitcherStyle.fill, 0.9);
+          g.circle(0, 0, modeSwitcherStyle.size);
           g.fill();
-          g.stroke({ color: 0xecf0f1, width: responsive.isMobile ? 1 : 2 });
-          g.circle(0, 0, buttonSize);
+          g.stroke({ color: modeSwitcherStyle.stroke, width: modeSwitcherStyle.strokeWidth });
+          g.circle(0, 0, modeSwitcherStyle.size);
           g.stroke();
         }}
         eventMode='static'
@@ -48,12 +57,7 @@ const ModeSwitcher: React.FC<ModeSwitcherProps> = ({
         x={position.x}
         y={position.y}
         anchor={{ x: 0.5, y: 0.5 }}
-        style={{ 
-          fontSize: responsive.fontSize.small, 
-          fill: '#ecf0f1', 
-          fontFamily: 'Arial', 
-          fontWeight: 'bold' 
-        }}
+        style={modeTextStyle}
       />
 
       {showModePopup && (
@@ -63,7 +67,7 @@ const ModeSwitcher: React.FC<ModeSwitcherProps> = ({
             y={0}
             draw={(g) => {
               g.clear();
-              g.fill(0x000000, 0.5);
+              g.fill(popupStyle.overlay, 0.5);
               g.rect(0, 0, responsive.screenWidth, responsive.screenHeight);
               g.fill();
             }}
@@ -75,11 +79,11 @@ const ModeSwitcher: React.FC<ModeSwitcherProps> = ({
             y={responsive.screenHeight / 2 - (responsive.isMobile ? 80 : 100)}
             draw={(g) => {
               g.clear();
-              g.fill(0x34495e, 0.95);
-              g.roundRect(0, 0, responsive.isMobile ? 280 : 360, responsive.isMobile ? 160 : 180, 12);
+              g.fill(popupStyle.background, 0.95);
+              g.roundRect(0, 0, responsive.isMobile ? 280 : 360, responsive.isMobile ? 160 : 180, popupStyle.borderRadius);
               g.fill();
-              g.stroke({ color: 0xffffff, width: responsive.isMobile ? 1 : 2 });
-              g.roundRect(0, 0, responsive.isMobile ? 280 : 360, responsive.isMobile ? 160 : 180, 12);
+              g.stroke({ color: popupStyle.stroke, width: popupStyle.strokeWidth });
+              g.roundRect(0, 0, responsive.isMobile ? 280 : 360, responsive.isMobile ? 160 : 180, popupStyle.borderRadius);
               g.stroke();
             }}
           />
@@ -88,12 +92,7 @@ const ModeSwitcher: React.FC<ModeSwitcherProps> = ({
             x={responsive.screenWidth / 2}
             y={responsive.screenHeight / 2 - (responsive.isMobile ? 40 : 60)}
             anchor={{ x: 0.5, y: 0.5 }}
-            style={{ 
-              fontSize: responsive.fontSize.medium, 
-              fill: '#ffffff', 
-              fontFamily: 'Arial', 
-              fontWeight: 'bold' 
-            }}
+            style={popupTextStyle}
           />
           {!pendingTargetMock && (
             <pixiText
@@ -101,11 +100,7 @@ const ModeSwitcher: React.FC<ModeSwitcherProps> = ({
               x={responsive.screenWidth / 2}
               y={responsive.screenHeight / 2 - (responsive.isMobile ? 15 : 25)}
               anchor={{ x: 0.5, y: 0.5 }}
-              style={{ 
-                fontSize: responsive.fontSize.small, 
-                fill: '#ffcc00', 
-                fontFamily: 'Arial' 
-              }}
+              style={warningTextStyle}
             />
           )}
           <pixiGraphics
@@ -113,8 +108,8 @@ const ModeSwitcher: React.FC<ModeSwitcherProps> = ({
             y={responsive.screenHeight / 2 + (responsive.isMobile ? 10 : 20)}
             draw={(g) => {
               g.clear();
-              g.fill(0x27ae60);
-              g.roundRect(0, 0, responsive.isMobile ? 80 : 120, responsive.isMobile ? 32 : 40, 8);
+              g.fill(successButtonStyle.fill);
+              g.roundRect(0, 0, responsive.isMobile ? 80 : 120, responsive.isMobile ? 32 : 40, successButtonStyle.borderRadius);
               g.fill();
             }}
             eventMode='static'
@@ -126,20 +121,15 @@ const ModeSwitcher: React.FC<ModeSwitcherProps> = ({
             x={responsive.screenWidth / 2 - (responsive.isMobile ? 60 : 60)}
             y={responsive.screenHeight / 2 + (responsive.isMobile ? 26 : 40)}
             anchor={{ x: 0.5, y: 0.5 }}
-            style={{ 
-              fontSize: responsive.fontSize.small, 
-              fill: '#ffffff', 
-              fontFamily: 'Arial', 
-              fontWeight: 'bold' 
-            }}
+            style={buttonTextStyle}
           />
           <pixiGraphics
             x={responsive.screenWidth / 2 + (responsive.isMobile ? 20 : 0)}
             y={responsive.screenHeight / 2 + (responsive.isMobile ? 10 : 20)}
             draw={(g) => {
               g.clear();
-              g.fill(0xc0392b);
-              g.roundRect(0, 0, responsive.isMobile ? 80 : 120, responsive.isMobile ? 32 : 40, 8);
+              g.fill(dangerButtonStyle.fill);
+              g.roundRect(0, 0, responsive.isMobile ? 80 : 120, responsive.isMobile ? 32 : 40, dangerButtonStyle.borderRadius);
               g.fill();
             }}
             eventMode='static'
@@ -151,12 +141,7 @@ const ModeSwitcher: React.FC<ModeSwitcherProps> = ({
             x={responsive.screenWidth / 2 + (responsive.isMobile ? 60 : 60)}
             y={responsive.screenHeight / 2 + (responsive.isMobile ? 26 : 40)}
             anchor={{ x: 0.5, y: 0.5 }}
-            style={{ 
-              fontSize: responsive.fontSize.small, 
-              fill: '#ffffff', 
-              fontFamily: 'Arial', 
-              fontWeight: 'bold' 
-            }}
+            style={buttonTextStyle}
           />
         </>
       )}

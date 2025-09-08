@@ -1,6 +1,8 @@
 import React from 'react';
 import { useResponsive } from '../hooks/useResponsive';
 import { ResponsiveLayout } from '../utils/responsiveLayout';
+import { gameStyles } from '../config/gameStyles';
+import { createTextStyle, createCellStyle, createBoardCenterStyle } from '../config/responsiveStyles';
 
 interface GameBoardProps {
   board: (string | number)[] | null;
@@ -19,6 +21,9 @@ const GameBoard: React.FC<GameBoardProps> = ({ board, currentIndex }) => {
   const centerPos = layout.getCenterBoardPosition();
   const centerDims = layout.getCenterBoardDimensions();
 
+  const centerStyle = createBoardCenterStyle(responsive.styles);
+  const centerTextStyle = createTextStyle(responsive.styles, 'lg', gameStyles.colors.ui.text.primary, 'bold');
+
   const centerNode = (
     <>
       <pixiGraphics
@@ -26,10 +31,10 @@ const GameBoard: React.FC<GameBoardProps> = ({ board, currentIndex }) => {
         y={centerPos.y}
         draw={(g) => {
           g.clear();
-          g.fill(0x1abc9c);
+          g.fill(centerStyle.fill);
           g.rect(0, 0, centerDims.width, centerDims.height);
           g.fill();
-          g.stroke({ color: 0x16a085, width: responsive.isMobile ? 2 : 4 });
+          g.stroke({ color: centerStyle.stroke, width: centerStyle.strokeWidth });
           g.rect(0, 0, centerDims.width, centerDims.height);
           g.stroke();
         }}
@@ -39,12 +44,7 @@ const GameBoard: React.FC<GameBoardProps> = ({ board, currentIndex }) => {
         x={centerPos.x + centerDims.width / 2}
         y={centerPos.y + centerDims.height / 2}
         anchor={{ x: 0.5, y: 0.5 }}
-        style={{
-          fontSize: responsive.fontSize.large,
-          fill: '#ffffff',
-          fontFamily: 'Arial',
-          fontWeight: 'bold',
-        }}
+        style={centerTextStyle}
       />
     </>
   );
@@ -57,6 +57,14 @@ const GameBoard: React.FC<GameBoardProps> = ({ board, currentIndex }) => {
         const isBonus = cell === 'bonus';
         const isSelected = index === currentIndex;
         
+        const cellStyle = createCellStyle(responsive.styles, isBonus, isSelected);
+        const cellTextStyle = createTextStyle(
+          responsive.styles, 
+          isSelected ? 'md' : 'sm', 
+          isSelected ? gameStyles.colors.ui.text.primary : gameStyles.colors.ui.text.primary, 
+          'bold'
+        );
+        
         return (
           <React.Fragment key={`cell-${index}`}>
             <pixiGraphics
@@ -64,30 +72,20 @@ const GameBoard: React.FC<GameBoardProps> = ({ board, currentIndex }) => {
               y={position.y}
               draw={(g) => {
                 g.clear();
-                const baseFill = isBonus ? 0xf39c12 : 0x8e44ad;
-                const highlightFill = isBonus ? 0xffc04d : 0xa569bd;
-                g.fill(isSelected ? highlightFill : baseFill);
-                g.rect(0, 0, responsive.layout.cellSize, responsive.layout.cellSize);
+                g.fill(cellStyle.fill);
+                g.rect(0, 0, cellStyle.width, cellStyle.height);
                 g.fill();
-                g.stroke({ 
-                  color: isSelected ? 0xffff00 : 0x34495e, 
-                  width: isSelected ? (responsive.isMobile ? 3 : 4) : (responsive.isMobile ? 1 : 2) 
-                });
-                g.rect(0, 0, responsive.layout.cellSize, responsive.layout.cellSize);
+                g.stroke({ color: cellStyle.stroke, width: cellStyle.strokeWidth });
+                g.rect(0, 0, cellStyle.width, cellStyle.height);
                 g.stroke();
               }}
             />
             <pixiText
               text={`${cell}`}
-              x={position.x + responsive.layout.cellSize / 2}
-              y={position.y + responsive.layout.cellSize / 2}
+              x={position.x + cellStyle.width / 2}
+              y={position.y + cellStyle.height / 2}
               anchor={{ x: 0.5, y: 0.5 }}
-              style={{
-                fontSize: isSelected ? responsive.fontSize.medium : responsive.fontSize.small,
-                fill: isSelected ? '#000000' : '#ffffff',
-                fontFamily: 'Arial',
-                fontWeight: 'bold',
-              }}
+              style={cellTextStyle}
             />
           </React.Fragment>
         );

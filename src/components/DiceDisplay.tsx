@@ -98,6 +98,7 @@ const DiceDisplay: React.FC<DiceDisplayProps> = ({
   }
 
   const diceSize = responsive.isMobile ? 40 : responsive.isTablet ? 48 : 56;
+  const diceGap = responsive.styles.spacing.md;
   
   return (
     <>
@@ -113,7 +114,7 @@ const DiceDisplay: React.FC<DiceDisplayProps> = ({
       <pixiSprite
         ref={dice2Ref}
         texture={diceTextureFor(displayDice[1])!}
-        x={position.x + diceSize + responsive.spacing.sm}
+        x={position.x + diceSize + diceGap}
         y={position.y}
         anchor={{ x: 0.5, y: 0.5 }}
         width={diceSize}

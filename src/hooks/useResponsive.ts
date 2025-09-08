@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { getResponsiveStyles, type ResponsiveStyles } from '../config/responsiveStyles';
 
 export interface ResponsiveConfig {
   screenWidth: number;
@@ -8,6 +9,8 @@ export interface ResponsiveConfig {
   isDesktop: boolean;
   scale: number;
   boardScale: number;
+  styles: ResponsiveStyles;
+  // Legacy properties for backward compatibility
   fontSize: {
     small: number;
     medium: number;
@@ -98,6 +101,17 @@ export const useResponsive = (): ResponsiveConfig => {
     buttonHeight: isMobile ? 32 : isTablet ? 36 : 40,
   };
 
+  // Create responsive styles configuration
+  const styles = getResponsiveStyles({
+    screenWidth: width,
+    screenHeight: height,
+    isMobile,
+    isTablet,
+    isDesktop,
+    scale,
+    boardScale,
+  });
+
   return {
     screenWidth: width,
     screenHeight: height,
@@ -106,6 +120,8 @@ export const useResponsive = (): ResponsiveConfig => {
     isDesktop,
     scale,
     boardScale,
+    styles,
+    // Legacy properties for backward compatibility
     fontSize,
     spacing,
     layout,

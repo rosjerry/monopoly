@@ -58,14 +58,21 @@ export class ResponsiveLayout {
   getDicePosition(): LayoutPosition {
     const { screenWidth, layout, spacing } = this.config;
     
-    // Position dice below the board, center justified
+    // Position dice below the board, perfectly centered
     const boardPos = this.getBoardPosition();
     const diceSize = this.config.isMobile ? 40 : this.config.isTablet ? 48 : 56;
-    const diceTotalWidth = diceSize * 2 + spacing.sm;
+    const diceGap = spacing.md;
+    const diceTotalWidth = diceSize * 2 + diceGap;
+    
+    // Calculate the center point of the screen
+    const screenCenterX = screenWidth / 2;
+    
+    // Position the first die so that the center of both dice aligns with screen center
+    const firstDieX = screenCenterX - (diceTotalWidth / 2) + (diceSize / 2);
     
     return {
-      x: (screenWidth - diceTotalWidth) / 2,
-      y: boardPos.y + layout.boardSize + spacing.lg,
+      x: firstDieX,
+      y: boardPos.y + layout.boardSize + spacing.xl,
     };
   }
 
