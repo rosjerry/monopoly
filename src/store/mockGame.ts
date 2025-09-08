@@ -2,16 +2,12 @@ import { create } from 'zustand';
 import type { BoardCell, GameStateResponse } from '../api/types';
 
 function createInitialBoard(): BoardCell[] {
-  // Create 15 unique numbers from 5 to 75 (in steps of 5)
   const numbers: number[] = Array.from({ length: 15 }, (_, i) => (i + 1) * 5);
   
-  // Shuffle the numbers array
   const shuffled = [...numbers].sort(() => Math.random() - 0.5);
   
-  // Choose a random position for the bonus square
   const insertIndex = Math.floor(Math.random() * 16);
   
-  // Create the result array
   const result: BoardCell[] = [];
   let numberIndex = 0;
   
@@ -24,12 +20,10 @@ function createInitialBoard(): BoardCell[] {
     }
   }
   
-  // Verify no duplicates (excluding bonus)
   const numbersOnly = result.filter((cell): cell is number => typeof cell === 'number');
   const uniqueNumbers = new Set(numbersOnly);
   if (uniqueNumbers.size !== numbersOnly.length) {
     console.error('Board generation created duplicates:', numbersOnly);
-    // Regenerate if duplicates found
     return createInitialBoard();
   }
   
@@ -70,7 +64,6 @@ export const useMockGameStore = create<MockGameState>((set, get) => ({
       ? state.bonus_mode_board
       : state.regular_mode_board;
 
-    // advance exactly sum steps from currentIndex
     const targetIndex = (state.currentIndex + sum) % board.length;
     const prize = board[targetIndex];
 
@@ -81,7 +74,6 @@ export const useMockGameStore = create<MockGameState>((set, get) => ({
         } else if (typeof v === 'number') {
           return v * 10;
         } else {
-          // Fallback for any unexpected values
           console.warn('Unexpected board cell value:', v);
           return 0;
         }
@@ -93,7 +85,6 @@ export const useMockGameStore = create<MockGameState>((set, get) => ({
       set({
         dice_result: [d1, d2],
         last_prize_won: 0,
-        balance: state.balance, // cost applied only after bonus spins? per spec cost still applied on the spin that hits bonus
         available_to_spin: true,
         bonus_mode: true,
         freespin_amount: 3,
@@ -114,14 +105,12 @@ export const useMockGameStore = create<MockGameState>((set, get) => ({
         freespin_amount: newFree,
         bonus_mode: exitBonus ? false : true,
         bonus_mode_board: exitBonus ? null : state.bonus_mode_board,
-        // Regenerate regular board when exiting bonus mode to prevent duplicates
         regular_mode_board: exitBonus ? createInitialBoard() : state.regular_mode_board,
         currentIndex: targetIndex,
       });
       return;
     }
 
-    // regular mode
     const cost = 50;
     const won = typeof prize === 'number' ? prize : 0;
     const newBalance = state.balance - cost + won;

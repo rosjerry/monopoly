@@ -34,7 +34,6 @@ function Scene() {
     console.log('Selected board cell:', value);
   }, [game.board, currentIndex]);
 
-  // Add refresh warning for mock mode
   useEffect(() => {
     if (!game.isMockMode) return;
 
@@ -48,7 +47,6 @@ function Scene() {
     return () => window.removeEventListener('beforeunload', handleBeforeUnload);
   }, [game.isMockMode]);
 
-  // Sync pawn position to last known prize from backend when not animating
   useEffect(() => {
     if (justResetRef.current) return; // skip if we just reset
     if (!game.board || game.lastPrize == null || isRolling) return;
@@ -56,7 +54,6 @@ function Scene() {
     if (idx >= 0) setCurrentIndex(idx);
   }, [game.board, game.lastPrize, isRolling]);
 
-  // After a backend reset, keep pawn at start when new board arrives
   useEffect(() => {
     if (!game.board) return;
     if (justResetRef.current) {
@@ -65,14 +62,11 @@ function Scene() {
     }
   }, [game.board]);
 
-  // Handle dice textures loaded from DiceDisplay component
   const handleDiceTexturesLoaded = useCallback((textures: Record<number, Texture>) => {
     setDiceTextures(textures);
-    // initialize with last known dice from backend if present
     if (game.dice) setDisplayDice(game.dice);
   }, [game.dice]);
 
-  // keep displayed dice in sync with backend results when not spinning
   useEffect(() => {
     if (!isSpinningDice && game.dice && diceTextures) {
       setDisplayDice(game.dice);
@@ -103,26 +97,20 @@ function Scene() {
     if (isRolling || !game.availableToSpin) return;
     setIsRolling(true);
 
-    // show -50 immediately
     setBalanceDelta({ value: -50, color: '#ff6b6b' });
 
     startDiceSpin();
-    // trigger backend/mock roll
     game.roll();
 
-    // wait 1s for spin animation (regardless of network)
     await new Promise((r) => setTimeout(r, 1000));
 
     stopDiceSpin();
 
-    // use the latest dice result from controller
     const dice = game.dice;
     if (dice) setDisplayDice(dice);
 
-    // show +win after move
     if (typeof game.lastPrize === 'number' && game.lastPrize > 0) {
       setBalanceDelta({ value: game.lastPrize, color: '#00e676' });
-      // clear delta after a moment
       setTimeout(() => setBalanceDelta(null), 1200);
     } else {
       setTimeout(() => setBalanceDelta(null), 800);
@@ -132,7 +120,6 @@ function Scene() {
   };
 
   const handleResetClick = () => {
-    // On backend mode, start from first square
     if (!game.isMockMode) {
       setCurrentIndex(0);
       justResetRef.current = true;
@@ -148,12 +135,10 @@ function Scene() {
   const applyModeSwitch = () => {
     if (pendingTargetMock === null) return;
     
-    // Reset mock state when switching from mock to backend
     if (game.isMockMode && !pendingTargetMock) {
       game.reset();
     }
     
-    // Reset pawn position to first square when switching from backend to mock
     if (!game.isMockMode && pendingTargetMock) {
       setCurrentIndex(0);
     }

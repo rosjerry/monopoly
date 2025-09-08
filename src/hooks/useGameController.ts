@@ -8,7 +8,6 @@ export function useGameController() {
   const [params] = useSearchParams();
   const isMock = params.get('mock') === 'true';
 
-  // backend mode hooks
   const gameQuery = useGameStateQuery();
   const spinMutation = useSpinMutation();
   const resetMutation = useResetGameMutation();

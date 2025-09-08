@@ -19,14 +19,12 @@ const DiceDisplay: React.FC<DiceDisplayProps> = ({
   const diceTweensRef = useRef<{ t1: gsap.core.Tween | null; t2: gsap.core.Tween | null }>({ t1: null, t2: null });
   const texturesLoadedRef = useRef<boolean>(false);
 
-  // Map dice face to asset path
   const diceTextureFor = (n: number) => {
     if (!diceTextures) return null;
     return diceTextures[n];
   };
 
   useEffect(() => {
-    // Only load textures once
     if (texturesLoadedRef.current) return;
     
     let mounted = true;
@@ -59,12 +57,10 @@ const DiceDisplay: React.FC<DiceDisplayProps> = ({
     return () => {
       mounted = false;
     };
-  }, []); // Empty dependency array - only run once
+  }, []);
 
-  // Handle spinning animation
   useEffect(() => {
     if (isSpinning) {
-      // start rotation tweens
       if (dice1Ref.current && dice2Ref.current) {
         diceTweensRef.current.t1 = gsap.to(dice1Ref.current, { 
           rotation: '+=6.283', 
@@ -80,7 +76,6 @@ const DiceDisplay: React.FC<DiceDisplayProps> = ({
         });
       }
     } else {
-      // stop rotation tweens
       if (diceTweensRef.current.t1) {
         diceTweensRef.current.t1.kill();
         diceTweensRef.current.t1 = null;

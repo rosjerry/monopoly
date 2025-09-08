@@ -26,7 +26,6 @@ function shuffleArray<T>(input: T[]): T[] {
 function createMockBoard(): BoardCell[] {
 	const numbers: number[] = Array.from({ length: 15 }, (_, idx) => (idx + 1) * 5);
 	const shuffledNumbers = shuffleArray(numbers);
-	// Insert "bonus" at a random position among 16 cells
 	const insertIndex = Math.floor(Math.random() * 16);
 	const board: BoardCell[] = [];
 	let numIdx = 0;
@@ -39,12 +38,10 @@ function createMockBoard(): BoardCell[] {
 		}
 	}
 	
-	// Verify no duplicates (excluding bonus)
 	const numbersOnly = board.filter((cell): cell is number => typeof cell === 'number');
 	const uniqueNumbers = new Set(numbersOnly);
 	if (uniqueNumbers.size !== numbersOnly.length) {
 		console.error('Mock board generation created duplicates:', numbersOnly);
-		// Regenerate if duplicates found
 		return createMockBoard();
 	}
 	
