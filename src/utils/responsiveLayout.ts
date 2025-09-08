@@ -92,8 +92,8 @@ export class ResponsiveLayout {
     // Position mode switcher in top right corner
     const buttonSize = this.config.isMobile ? 24 : 28;
     return {
-      x: screenWidth - buttonSize - spacing.md,
-      y: spacing.md,
+      x: screenWidth - spacing.md - (buttonSize / 2), // Account for circle center
+      y: spacing.md + (buttonSize / 2), // Account for circle center
     };
   }
 

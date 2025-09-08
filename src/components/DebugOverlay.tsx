@@ -56,8 +56,8 @@ const DebugOverlay: React.FC = () => {
         }}
       />
       
-      {/* Board outline */}
-      <pixiGraphics
+      {/* Board outline - commented out */}
+      {/* <pixiGraphics
         x={boardPos.x}
         y={boardPos.y}
         draw={(g) => {
@@ -66,7 +66,7 @@ const DebugOverlay: React.FC = () => {
           g.rect(0, 0, responsive.layout.boardSize, responsive.layout.boardSize);
           g.stroke();
         }}
-      />
+      /> */}
       
       {/* Dice center crosshair */}
       <pixiGraphics

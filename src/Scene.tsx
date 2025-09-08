@@ -14,7 +14,7 @@ import {
   GameInfo, 
   ModeSwitcher 
 } from './components';
-import DebugOverlay from './components/DebugOverlay';
+// import DebugOverlay from './components/DebugOverlay';
 
 function Scene() {
   const [currentIndex, setCurrentIndex] = useState<number>(0);
@@ -208,8 +208,8 @@ function Scene() {
         onCancelModeSwitch={cancelModeSwitch}
       />
       
-      {/* Debug overlay - remove this after testing */}
-      <DebugOverlay />
+      {/* Debug overlay - commented out */}
+      {/* <DebugOverlay /> */}
     </pixiContainer>
   );
 }
