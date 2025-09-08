@@ -20,12 +20,13 @@ function createInitialBoard(): BoardCell[] {
 type MockGameState = GameStateResponse & {
   roll: () => void;
   reset: () => void;
+  currentIndex: number;
 };
 
 const initialRegular = createInitialBoard();
 
 export const useMockGameStore = create<MockGameState>((set, get) => ({
-  balance: 500,
+  balance: 100,
   dice_result: null,
   last_prize_won: null,
   available_to_spin: true,
@@ -33,6 +34,7 @@ export const useMockGameStore = create<MockGameState>((set, get) => ({
   bonus_mode: false,
   freespin_amount: 0,
   regular_mode_board: initialRegular,
+  currentIndex: 0,
   roll: () => {
     const state = get();
     if (!state.bonus_mode && state.balance < 50) {
@@ -48,9 +50,9 @@ export const useMockGameStore = create<MockGameState>((set, get) => ({
       ? state.bonus_mode_board
       : state.regular_mode_board;
 
-    // position moves clockwise by sum; we just sample prize at index sum-1 for simplicity
-    const idx = (sum - 1) % board.length;
-    const prize = board[idx];
+    // advance exactly sum steps from currentIndex
+    const targetIndex = (state.currentIndex + sum) % board.length;
+    const prize = board[targetIndex];
 
     if (prize === 'bonus' && !state.bonus_mode) {
       const multiplied = state.regular_mode_board.map((v) => (v === 'bonus' ? 500 : (v as number) * 10)) as BoardCell[];
@@ -62,6 +64,7 @@ export const useMockGameStore = create<MockGameState>((set, get) => ({
         bonus_mode: true,
         freespin_amount: 3,
         bonus_mode_board: multiplied,
+        currentIndex: state.currentIndex,
       });
       return;
     }
@@ -77,6 +80,7 @@ export const useMockGameStore = create<MockGameState>((set, get) => ({
         freespin_amount: newFree,
         bonus_mode: exitBonus ? false : true,
         bonus_mode_board: exitBonus ? null : state.bonus_mode_board,
+        currentIndex: targetIndex,
       });
       return;
     }
@@ -90,11 +94,12 @@ export const useMockGameStore = create<MockGameState>((set, get) => ({
       last_prize_won: won,
       balance: newBalance,
       available_to_spin: newBalance > 50,
+      currentIndex: targetIndex,
     });
   },
   reset: () => {
     set({
-      balance: 500,
+      balance: 100,
       dice_result: null,
       last_prize_won: null,
       available_to_spin: true,
@@ -102,6 +107,7 @@ export const useMockGameStore = create<MockGameState>((set, get) => ({
       bonus_mode: false,
       freespin_amount: 0,
       regular_mode_board: createInitialBoard(),
+      currentIndex: 0,
     });
   },
 }));
