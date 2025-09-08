@@ -38,6 +38,16 @@ function createMockBoard(): BoardCell[] {
 			numIdx += 1;
 		}
 	}
+	
+	// Verify no duplicates (excluding bonus)
+	const numbersOnly = board.filter((cell): cell is number => typeof cell === 'number');
+	const uniqueNumbers = new Set(numbersOnly);
+	if (uniqueNumbers.size !== numbersOnly.length) {
+		console.error('Mock board generation created duplicates:', numbersOnly);
+		// Regenerate if duplicates found
+		return createMockBoard();
+	}
+	
 	return board;
 }
 

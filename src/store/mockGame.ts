@@ -114,6 +114,8 @@ export const useMockGameStore = create<MockGameState>((set, get) => ({
         freespin_amount: newFree,
         bonus_mode: exitBonus ? false : true,
         bonus_mode_board: exitBonus ? null : state.bonus_mode_board,
+        // Regenerate regular board when exiting bonus mode to prevent duplicates
+        regular_mode_board: exitBonus ? createInitialBoard() : state.regular_mode_board,
         currentIndex: targetIndex,
       });
       return;
