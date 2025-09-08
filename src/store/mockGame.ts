@@ -2,18 +2,38 @@ import { create } from 'zustand';
 import type { BoardCell, GameStateResponse } from '../api/types';
 
 function createInitialBoard(): BoardCell[] {
+  // Create 15 unique numbers from 5 to 75 (in steps of 5)
   const numbers: number[] = Array.from({ length: 15 }, (_, i) => (i + 1) * 5);
+  
+  // Shuffle the numbers array
   const shuffled = [...numbers].sort(() => Math.random() - 0.5);
+  
+  // Choose a random position for the bonus square
   const insertIndex = Math.floor(Math.random() * 16);
+  
+  // Create the result array
   const result: BoardCell[] = [];
-  let idx = 0;
+  let numberIndex = 0;
+  
   for (let i = 0; i < 16; i += 1) {
-    if (i === insertIndex) result.push('bonus');
-    else {
-      result.push(shuffled[idx]);
-      idx += 1;
+    if (i === insertIndex) {
+      result.push('bonus');
+    } else {
+      result.push(shuffled[numberIndex]);
+      numberIndex += 1;
     }
   }
+  
+  // Verify no duplicates (excluding bonus)
+  const numbersOnly = result.filter((cell): cell is number => typeof cell === 'number');
+  const uniqueNumbers = new Set(numbersOnly);
+  if (uniqueNumbers.size !== numbersOnly.length) {
+    console.error('Board generation created duplicates:', numbersOnly);
+    // Regenerate if duplicates found
+    return createInitialBoard();
+  }
+  
+  console.log('Generated board:', result);
   return result;
 }
 
@@ -55,7 +75,21 @@ export const useMockGameStore = create<MockGameState>((set, get) => ({
     const prize = board[targetIndex];
 
     if (prize === 'bonus' && !state.bonus_mode) {
-      const multiplied = state.regular_mode_board.map((v) => (v === 'bonus' ? 500 : (v as number) * 10)) as BoardCell[];
+      const multiplied = state.regular_mode_board.map((v) => {
+        if (v === 'bonus') {
+          return 500;
+        } else if (typeof v === 'number') {
+          return v * 10;
+        } else {
+          // Fallback for any unexpected values
+          console.warn('Unexpected board cell value:', v);
+          return 0;
+        }
+      }) as BoardCell[];
+      
+      console.log('Entering bonus mode - Original board:', state.regular_mode_board);
+      console.log('Entering bonus mode - Bonus board:', multiplied);
+      
       set({
         dice_result: [d1, d2],
         last_prize_won: 0,
@@ -111,5 +145,6 @@ export const useMockGameStore = create<MockGameState>((set, get) => ({
     });
   },
 }));
+
 
 

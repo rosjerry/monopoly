@@ -1,13 +1,10 @@
 import { useEffect, useRef, useState } from 'react';
 import { Texture, Assets } from 'pixi.js';
-import { Howl } from 'howler';
 import { gsap } from 'gsap';
 import { useGameController } from './hooks/useGameController';
 import { useNavigate, useSearchParams } from 'react-router';
 
 function Scene() {
-  const [audioTexture, setAudioTexture] = useState<Texture | null>(null);
-  const [audioEnabled, setAudioEnabled] = useState<boolean>(false);
   const [currentIndex, setCurrentIndex] = useState<number>(0);
   const [isRolling, setIsRolling] = useState<boolean>(false);
   const [isSpinningDice, setIsSpinningDice] = useState<boolean>(false);
@@ -15,11 +12,6 @@ function Scene() {
   const [diceTextures, setDiceTextures] = useState<Record<number, Texture> | null>(null);
   const tickerHandlerRef = useRef<((time: number) => void) | null>(null);
   const [balanceDelta, setBalanceDelta] = useState<{ value: number; color: string } | null>(null);
-  const hoverSoundRef = useRef<Howl | null>(null);
-  const bgmSoundRef = useRef<Howl | null>(null);
-  const graphicsRef = useRef<any>(null);
-  const audioSpriteRef = useRef<any>(null);
-  const audioTextRef = useRef<any>(null);
   const dice1Ref = useRef<any>(null);
   const dice2Ref = useRef<any>(null);
   const diceTweensRef = useRef<{ t1: gsap.core.Tween | null; t2: gsap.core.Tween | null }>({ t1: null, t2: null });
@@ -30,57 +22,6 @@ function Scene() {
   const [params] = useSearchParams();
   const [showModePopup, setShowModePopup] = useState<boolean>(false);
   const [pendingTargetMock, setPendingTargetMock] = useState<boolean | null>(null);
-
-  useEffect(() => {
-    let isMounted = true;
-    Assets.load('/assets/main/audio.png').then((res) => {
-      if (!isMounted) return;
-      const tex =
-        res instanceof Texture ? res : Texture.from('/assets/main/audio.png');
-      setAudioTexture(tex);
-    });
-    return () => {
-      isMounted = false;
-    };
-  }, []);
-
-  useEffect(() => {
-    const sound = new Howl({
-      src: [
-        '/assets/main/sounds/sfx-hover.mp3',
-        '/assets/main/sounds/sfx-hover.ogg',
-      ],
-      volume: 0.5,
-      preload: true,
-    });
-    hoverSoundRef.current = sound;
-    return () => {
-      sound.unload();
-      hoverSoundRef.current = null;
-    };
-  }, []);
-
-  useEffect(() => {
-    const bgm = new Howl({
-      src: ['/assets/main/sounds/komari.mp3'],
-      volume: 0.3,
-      loop: true,
-      preload: true,
-    });
-    bgmSoundRef.current = bgm;
-    return () => {
-      bgm.unload();
-      bgmSoundRef.current = null;
-    };
-  }, []);
-
-  useEffect(() => {
-    if (graphicsRef.current) {
-      graphicsRef.current.pivot.set(25, 25);
-    }
-  }, []);
-
-  // board provided by controller
 
   useEffect(() => {
     if (!game.board) return;
@@ -181,19 +122,6 @@ function Scene() {
     }
   };
 
-  const animatePawnSteps = async (steps: number) => {
-    return new Promise<void>((resolve) => {
-      const tl = gsap.timeline({ onComplete: resolve });
-      for (let i = 1; i <= steps; i += 1) {
-        tl.to({}, {
-          duration: 0.12,
-          onComplete: () => setCurrentIndex((prev) => (prev + 1) % 16),
-          ease: 'power1.inOut',
-        });
-      }
-    });
-  };
-
   const handleRollClick = async () => {
     if (isRolling || !game.availableToSpin) return;
     setIsRolling(true);
@@ -214,10 +142,6 @@ function Scene() {
     const dice = game.dice;
     if (dice) setDisplayDice(dice);
 
-    // animate pawn movement based on dice
-    const steps = dice ? dice[0] + dice[1] : 0;
-    if (steps > 0) await animatePawnSteps(steps);
-
     // show +win after move
     if (typeof game.lastPrize === 'number' && game.lastPrize > 0) {
       setBalanceDelta({ value: game.lastPrize, color: '#00e676' });
@@ -228,20 +152,6 @@ function Scene() {
     }
 
     setIsRolling(false);
-  };
-
-  const toggleAudio = () => {
-    const newAudioState = !audioEnabled;
-    setAudioEnabled(newAudioState);
-
-    const bgm = bgmSoundRef.current;
-    if (bgm) {
-      if (newAudioState) {
-        bgm.play();
-      } else {
-        bgm.stop();
-      }
-    }
   };
 
   const handleResetClick = () => {
@@ -260,6 +170,17 @@ function Scene() {
 
   const applyModeSwitch = () => {
     if (pendingTargetMock === null) return;
+    
+    // Reset mock state when switching from mock to backend
+    if (game.isMockMode && !pendingTargetMock) {
+      game.reset();
+    }
+    
+    // Reset pawn position to first square when switching from backend to mock
+    if (!game.isMockMode && pendingTargetMock) {
+      setCurrentIndex(0);
+    }
+    
     const p = new URLSearchParams(params);
     if (pendingTargetMock) p.set('mock', 'true');
     else p.delete('mock');
@@ -275,33 +196,6 @@ function Scene() {
 
   return (
     <pixiContainer x={0} y={0}>
-      {audioTexture && (
-        <pixiSprite
-          ref={audioSpriteRef}
-          texture={audioTexture}
-          x={window.innerWidth - 100}
-          y={100}
-          anchor={{ x: 0.5, y: 0.5 }}
-          width={100}
-          height={100}
-          eventMode='static'
-          onPointerDown={toggleAudio}
-        />
-      )}
-
-      <pixiText
-        ref={audioTextRef}
-        text={audioEnabled ? 'click to disable audio' : 'click to enable audio'}
-        x={window.innerWidth - 170}
-        y={50}
-        anchor={{ x: 0.5, y: 0.5 }}
-        style={{
-          fontSize: 24,
-          fill: '#ffffff',
-          fontFamily: 'Arial',
-        }}
-      />
-
       {/* Balance Display */}
       <pixiText
         text={`Balance: ${game.balance}`}
@@ -414,9 +308,8 @@ function Scene() {
         }}
       />
 
-
       <pixiText
-        text={`Board Mode: ${game.isMockMode ? 'Mock (Local)' : 'Backend'}`}
+        text={`Board Mode: ${game.isMockMode ? 'Mock' : 'Real'}`}
         x={300}
         y={170}
         anchor={{ x: 0, y: 0.5 }}
@@ -430,7 +323,7 @@ function Scene() {
       {/* Selected Cell Display */}
       {game.board && (
         <pixiText
-          text={`Selected: ${game.board[currentIndex]}`}
+          text={`Current Square: ${game.board[currentIndex]}`}
           x={300}
           y={140}
           anchor={{ x: 0, y: 0.5 }}
