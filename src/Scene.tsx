@@ -1,8 +1,16 @@
-import { useEffect, useRef, useState } from 'react';
-import { Texture, Assets } from 'pixi.js';
+import { useEffect, useRef, useState, useCallback } from 'react';
+import { Texture } from 'pixi.js';
 import { gsap } from 'gsap';
 import { useGameController } from './hooks/useGameController';
 import { useNavigate, useSearchParams } from 'react-router';
+import { 
+  BalanceDisplay, 
+  ControlButtons, 
+  DiceDisplay, 
+  GameBoard, 
+  GameInfo, 
+  ModeSwitcher 
+} from './components';
 
 function Scene() {
   const [currentIndex, setCurrentIndex] = useState<number>(0);
@@ -12,9 +20,6 @@ function Scene() {
   const [diceTextures, setDiceTextures] = useState<Record<number, Texture> | null>(null);
   const tickerHandlerRef = useRef<((time: number) => void) | null>(null);
   const [balanceDelta, setBalanceDelta] = useState<{ value: number; color: string } | null>(null);
-  const dice1Ref = useRef<any>(null);
-  const dice2Ref = useRef<any>(null);
-  const diceTweensRef = useRef<{ t1: gsap.core.Tween | null; t2: gsap.core.Tween | null }>({ t1: null, t2: null });
   const justResetRef = useRef<boolean>(false);
 
   const game = useGameController();
@@ -60,39 +65,11 @@ function Scene() {
     }
   }, [game.board]);
 
-  // Map dice face to asset path
-  const diceTextureFor = (n: number) => {
-    if (!diceTextures) return null;
-    return diceTextures[n];
-  };
-
-  useEffect(() => {
-    let mounted = true;
-    const paths: Record<number, string> = {
-      1: '/assets/main/dice/iaqe.png',
-      2: '/assets/main/dice/du.png',
-      3: '/assets/main/dice/se.png',
-      4: '/assets/main/dice/chari.png',
-      5: '/assets/main/dice/fanji.png',
-      6: '/assets/main/dice/shashi.png',
-    };
-    Promise.all(Object.values(paths).map((p) => Assets.load(p))).then(() => {
-      if (!mounted) return;
-      const map: Record<number, Texture> = {
-        1: Texture.from(paths[1]),
-        2: Texture.from(paths[2]),
-        3: Texture.from(paths[3]),
-        4: Texture.from(paths[4]),
-        5: Texture.from(paths[5]),
-        6: Texture.from(paths[6]),
-      };
-      setDiceTextures(map);
-      // initialize with last known dice from backend if present
-      if (game.dice) setDisplayDice(game.dice);
-    });
-    return () => {
-      mounted = false;
-    };
+  // Handle dice textures loaded from DiceDisplay component
+  const handleDiceTexturesLoaded = useCallback((textures: Record<number, Texture>) => {
+    setDiceTextures(textures);
+    // initialize with last known dice from backend if present
+    if (game.dice) setDisplayDice(game.dice);
   }, [game.dice]);
 
   // keep displayed dice in sync with backend results when not spinning
@@ -112,11 +89,6 @@ function Scene() {
     };
     tickerHandlerRef.current = handler;
     gsap.ticker.add(handler);
-    // start rotation tweens
-    if (dice1Ref.current && dice2Ref.current) {
-      diceTweensRef.current.t1 = gsap.to(dice1Ref.current, { rotation: '+=6.283', duration: 0.4, repeat: -1, ease: 'none' });
-      diceTweensRef.current.t2 = gsap.to(dice2Ref.current, { rotation: '+=6.283', duration: 0.45, repeat: -1, ease: 'none' });
-    }
   };
 
   const stopDiceSpin = () => {
@@ -125,15 +97,6 @@ function Scene() {
       tickerHandlerRef.current = null;
     }
     setIsSpinningDice(false);
-    // stop rotation tweens
-    if (diceTweensRef.current.t1) {
-      diceTweensRef.current.t1.kill();
-      diceTweensRef.current.t1 = null;
-    }
-    if (diceTweensRef.current.t2) {
-      diceTweensRef.current.t2.kill();
-      diceTweensRef.current.t2 = null;
-    }
   };
 
   const handleRollClick = async () => {
@@ -210,360 +173,43 @@ function Scene() {
 
   return (
     <pixiContainer x={0} y={0}>
-      {/* Balance Display */}
-      <pixiText
-        text={`Balance: ${game.balance}`}
-        x={100}
-        y={80}
-        anchor={{ x: 0, y: 0.5 }}
-        style={{
-          fontSize: 22,
-          fill: '#00e676',
-          fontFamily: 'Arial',
-          fontWeight: 'bold',
-        }}
+      <BalanceDisplay 
+        balance={game.balance} 
+        balanceDelta={balanceDelta} 
       />
-
-      {/* Dice Roll Button */}
-      <pixiGraphics
-        x={100}
-        y={200}
-        draw={(g) => {
-          g.clear();
-          g.fill(0x4a90e2);
-          g.rect(0, 0, 120, 40);
-          g.fill();
-          g.stroke({ color: 0xffffff, width: 2 });
-          g.rect(0, 0, 120, 40);
-          g.stroke();
-        }}
-        eventMode='static'
-        onPointerDown={handleRollClick}
-        cursor='pointer'
+      
+      <ControlButtons
+        onRollClick={handleRollClick}
+        onResetClick={handleResetClick}
+        isRolling={isRolling}
+        availableToSpin={game.availableToSpin}
       />
-
-      <pixiText
-        text={"Roll dice"}
-        x={160}
-        y={220}
-        anchor={{ x: 0.5, y: 0.5 }}
-        style={{
-          fontSize: 16,
-          fill: '#ffffff',
-          fontFamily: 'Arial',
-        }}
+      
+      <DiceDisplay
+        displayDice={displayDice}
+        isSpinning={isSpinningDice}
+        onDiceTexturesLoaded={handleDiceTexturesLoaded}
       />
-
-      {/* Balance delta */}
-      {balanceDelta && (
-        <pixiText
-          text={`${balanceDelta.value > 0 ? '+' : ''}${balanceDelta.value}`}
-          x={250}
-          y={80}
-          anchor={{ x: 0, y: 0.5 }}
-          style={{
-            fontSize: 20,
-            fill: balanceDelta.color,
-            fontFamily: 'Arial',
-            fontWeight: 'bold',
-          }}
-        />
-      )}
-
-      {/* Dice display */}
-      {diceTextures && displayDice && (
-        <>
-          <pixiSprite
-            ref={dice1Ref}
-            texture={diceTextureFor(displayDice[0])!}
-            x={200}
-            y={460}
-            anchor={{ x: 0.5, y: 0.5 }}
-            width={56}
-            height={56}
-          />
-          <pixiSprite
-            ref={dice2Ref}
-            texture={diceTextureFor(displayDice[1])!}
-            x={280}
-            y={460}
-            anchor={{ x: 0.5, y: 0.5 }}
-            width={56}
-            height={56}
-          />
-        </>
-      )}
-
-      <pixiGraphics
-        x={240}
-        y={200}
-        draw={(g) => {
-          g.clear();
-          g.fill(0xe74c3c);
-          g.rect(0, 0, 120, 40);
-          g.fill();
-          g.stroke({ color: 0xffffff, width: 2 });
-          g.rect(0, 0, 120, 40);
-          g.stroke();
-        }}
-        eventMode='static'
-        onPointerDown={handleResetClick}
-        cursor='pointer'
+      
+      <GameInfo
+        board={game.board}
+        currentIndex={currentIndex}
+        isMockMode={game.isMockMode}
       />
-      <pixiText
-        text={"Reset"}
-        x={300}
-        y={220}
-        anchor={{ x: 0.5, y: 0.5 }}
-        style={{
-          fontSize: 16,
-          fill: '#ffffff',
-          fontFamily: 'Arial',
-        }}
+      
+      <GameBoard
+        board={game.board}
+        currentIndex={currentIndex}
       />
-
-      <pixiText
-        text={`Board Mode: ${game.isMockMode ? 'Mock' : 'Real'}`}
-        x={300}
-        y={170}
-        anchor={{ x: 0, y: 0.5 }}
-        style={{
-          fontSize: 14,
-          fill: game.isMockMode ? '#00ff00' : '#ff6b6b',
-          fontFamily: 'Arial',
-        }}
+      
+      <ModeSwitcher
+        isMockMode={game.isMockMode}
+        showModePopup={showModePopup}
+        pendingTargetMock={pendingTargetMock}
+        onOpenModePopup={openModePopup}
+        onApplyModeSwitch={applyModeSwitch}
+        onCancelModeSwitch={cancelModeSwitch}
       />
-
-      {/* Selected Cell Display */}
-      {game.board && (
-        <pixiText
-          text={`Current Square: ${game.board[currentIndex]}`}
-          x={300}
-          y={140}
-          anchor={{ x: 0, y: 0.5 }}
-          style={{
-            fontSize: 16,
-            fill: '#ffffff',
-            fontFamily: 'Arial',
-            fontWeight: 'bold',
-          }}
-        />
-      )}
-
-      {game.board && (
-        <>
-          {(() => {
-            const cellSize = 60;
-            const spacing = 20;
-            const total = cellSize + spacing;
-            const startX = 350;
-            const startY = 300;
-
-            const positions: { row: number; col: number }[] = [];
-            for (let c = 0; c < 5; c += 1) positions.push({ row: 0, col: c });
-            for (let r = 1; r < 4; r += 1) positions.push({ row: r, col: 4 });
-            for (let c = 4; c >= 0; c -= 1) positions.push({ row: 4, col: c });
-            for (let r = 3; r >= 1; r -= 1) positions.push({ row: r, col: 0 });
-
-            const centerTopLeftX = startX + total * 1;
-            const centerTopLeftY = startY + total * 1;
-            const centerWidth = total * 3 - spacing;
-            const centerHeight = total * 3 - spacing;
-
-            const centerNode = (
-              <>
-                <pixiGraphics
-                  x={centerTopLeftX}
-                  y={centerTopLeftY}
-                  draw={(g) => {
-                    g.clear();
-                    g.fill(0x1abc9c);
-                    g.rect(0, 0, centerWidth, centerHeight);
-                    g.fill();
-                    g.stroke({ color: 0x16a085, width: 4 });
-                    g.rect(0, 0, centerWidth, centerHeight);
-                    g.stroke();
-                  }}
-                />
-                <pixiText
-                  text={'monopoly'}
-                  x={centerTopLeftX + centerWidth / 2}
-                  y={centerTopLeftY + centerHeight / 2}
-                  anchor={{ x: 0.5, y: 0.5 }}
-                  style={{
-                    fontSize: 28,
-                    fill: '#ffffff',
-                    fontFamily: 'Arial',
-                    fontWeight: 'bold',
-                  }}
-                />
-              </>
-            );
-
-            return (
-              <>
-                {centerNode}
-                {game.board.map((cell, index) => {
-                  const { row, col } = positions[index];
-                  const x = startX + col * total;
-                  const y = startY + row * total;
-                  const isBonus = cell === 'bonus';
-                  const isSelected = index === currentIndex;
-                  return (
-                    <>
-                      <pixiGraphics
-                        key={`ring-bg-${index}`}
-                        x={x}
-                        y={y}
-                        draw={(g) => {
-                          g.clear();
-                          const baseFill = isBonus ? 0xf39c12 : 0x8e44ad;
-                          const highlightFill = isBonus ? 0xffc04d : 0xa569bd;
-                          g.fill(isSelected ? highlightFill : baseFill);
-                          g.rect(0, 0, cellSize, cellSize);
-                          g.fill();
-                          g.stroke({ color: isSelected ? 0xffff00 : 0x34495e, width: isSelected ? 4 : 2 });
-                          g.rect(0, 0, cellSize, cellSize);
-                          g.stroke();
-                        }}
-                      />
-                      <pixiText
-                        key={`ring-text-${index}`}
-                        text={`${cell}`}
-                        x={x + cellSize / 2}
-                        y={y + cellSize / 2}
-                        anchor={{ x: 0.5, y: 0.5 }}
-                        style={{
-                          fontSize: isSelected ? 18 : 16,
-                          fill: isSelected ? '#000000' : '#ffffff',
-                          fontFamily: 'Arial',
-                          fontWeight: 'bold',
-                        }}
-                      />
-                    </>
-                  );
-                })}
-              </>
-            );
-          })()}
-        </>
-      )}
-
-      {/* Floating mode switch button (bottom-right) */}
-      <pixiGraphics
-        x={window.innerWidth - 80}
-        y={window.innerHeight - 80}
-        draw={(g) => {
-          g.clear();
-          g.fill(0x2c3e50, 0.9);
-          g.circle(0, 0, 28);
-          g.fill();
-          g.stroke({ color: 0xecf0f1, width: 2 });
-          g.circle(0, 0, 28);
-          g.stroke();
-        }}
-        eventMode='static'
-        onPointerDown={() => openModePopup(!game.isMockMode)}
-        cursor='pointer'
-      />
-      <pixiText
-        text={game.isMockMode ? 'Mock' : 'Live'}
-        x={window.innerWidth - 80}
-        y={window.innerHeight - 80}
-        anchor={{ x: 0.5, y: 0.5 }}
-        style={{ fontSize: 12, fill: '#ecf0f1', fontFamily: 'Arial', fontWeight: 'bold' }}
-      />
-
-      {/* Mode popup */}
-      {showModePopup && (
-        <>
-          {/* overlay */}
-          <pixiGraphics
-            x={0}
-            y={0}
-            draw={(g) => {
-              g.clear();
-              g.fill(0x000000, 0.5);
-              g.rect(0, 0, window.innerWidth, window.innerHeight);
-              g.fill();
-            }}
-            eventMode='static'
-            onPointerDown={cancelModeSwitch}
-          />
-          {/* dialog */}
-          <pixiGraphics
-            x={window.innerWidth / 2 - 180}
-            y={window.innerHeight / 2 - 100}
-            draw={(g) => {
-              g.clear();
-              g.fill(0x34495e, 0.95);
-              g.roundRect(0, 0, 360, 180, 12);
-              g.fill();
-              g.stroke({ color: 0xffffff, width: 2 });
-              g.roundRect(0, 0, 360, 180, 12);
-              g.stroke();
-            }}
-          />
-          <pixiText
-            text={pendingTargetMock ? 'Switch to Mock mode?' : 'Switch to Live mode?'}
-            x={window.innerWidth / 2}
-            y={window.innerHeight / 2 - 60}
-            anchor={{ x: 0.5, y: 0.5 }}
-            style={{ fontSize: 18, fill: '#ffffff', fontFamily: 'Arial', fontWeight: 'bold' }}
-          />
-          {!pendingTargetMock && (
-            <pixiText
-              text={'Warning: switching from Mock will lose local game state.'}
-              x={window.innerWidth / 2}
-              y={window.innerHeight / 2 - 25}
-              anchor={{ x: 0.5, y: 0.5 }}
-              style={{ fontSize: 14, fill: '#ffcc00', fontFamily: 'Arial' }}
-            />
-          )}
-          {/* buttons */}
-          <pixiGraphics
-            x={window.innerWidth / 2 - 120}
-            y={window.innerHeight / 2 + 20}
-            draw={(g) => {
-              g.clear();
-              g.fill(0x27ae60);
-              g.roundRect(0, 0, 120, 40, 8);
-              g.fill();
-            }}
-            eventMode='static'
-            onPointerDown={applyModeSwitch}
-            cursor='pointer'
-          />
-          <pixiText
-            text={pendingTargetMock ? 'Switch to Mock' : 'Switch to Live'}
-            x={window.innerWidth / 2 - 60}
-            y={window.innerHeight / 2 + 40}
-            anchor={{ x: 0.5, y: 0.5 }}
-            style={{ fontSize: 16, fill: '#ffffff', fontFamily: 'Arial', fontWeight: 'bold' }}
-          />
-          <pixiGraphics
-            x={window.innerWidth / 2 + 0}
-            y={window.innerHeight / 2 + 20}
-            draw={(g) => {
-              g.clear();
-              g.fill(0xc0392b);
-              g.roundRect(0, 0, 120, 40, 8);
-              g.fill();
-            }}
-            eventMode='static'
-            onPointerDown={cancelModeSwitch}
-            cursor='pointer'
-          />
-          <pixiText
-            text={'Cancel'}
-            x={window.innerWidth / 2 + 60}
-            y={window.innerHeight / 2 + 40}
-            anchor={{ x: 0.5, y: 0.5 }}
-            style={{ fontSize: 16, fill: '#ffffff', fontFamily: 'Arial', fontWeight: 'bold' }}
-          />
-        </>
-      )}
-
     </pixiContainer>
   );
 }
