@@ -1,5 +1,5 @@
 import { create } from 'zustand';
-import { Howl, Howler } from 'howler';
+import { Howl } from 'howler';
 
 interface AudioStore {
   isAudioEnabled: boolean;
@@ -21,14 +21,20 @@ interface AudioStore {
 
 export const useAudioStore = create<AudioStore>()((set, get) => ({
   isAudioEnabled: true,
+  currentBackgroundMode: null,
   sounds: {},
   
   toggleAudio: () => {
-    const { isAudioEnabled, stopAllSounds } = get();
+    const { isAudioEnabled, stopAllSounds, currentBackgroundMode, setBackgroundMusic } = get();
     const newEnabled = !isAudioEnabled;
     
     if (!newEnabled) {
       stopAllSounds();
+    } else {
+      // When turning audio back on, resume background music if there was one playing
+      if (currentBackgroundMode) {
+        setTimeout(() => setBackgroundMusic(currentBackgroundMode), 100);
+      }
     }
     
     // Update Howler global volume
@@ -100,6 +106,10 @@ export const useAudioStore = create<AudioStore>()((set, get) => ({
   
   setBackgroundMusic: (mode) => {
     const { sounds, isAudioEnabled } = get();
+    
+    // Always update the current background mode, even if audio is disabled
+    set({ currentBackgroundMode: mode });
+    
     if (!isAudioEnabled) return;
     
     // Stop both background tracks
