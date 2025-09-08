@@ -1,6 +1,7 @@
 import { Application, extend } from '@pixi/react';
 import { Container, Sprite, Graphics, Text } from 'pixi.js';
 import Scene from './Scene';
+import { gameStyles } from './config/gameStyles';
 
 extend({
   Container,
@@ -12,7 +13,7 @@ extend({
 function App() {
   return (
     <Application
-      backgroundColor={0x922724}
+      backgroundColor={gameStyles.colors.background.primary}
       resizeTo={window}
       defaultTextStyle={{
         fontSize: 24,

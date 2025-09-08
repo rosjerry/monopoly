@@ -1,5 +1,5 @@
 import { gameStyles, getFontSize, getSpacing, getStrokeWidth } from './gameStyles';
-import type { ResponsiveConfig } from '../hooks/useResponsive';
+// import type { ResponsiveConfig } from '../hooks/useResponsive';
 
 // Responsive style configuration that adapts to screen size
 export interface ResponsiveStyles {
@@ -64,7 +64,7 @@ export const getResponsiveStyles = (config: {
   scale: number;
   boardScale: number;
 }): ResponsiveStyles => {
-  const { isMobile, isTablet, scale } = config;
+  const { isMobile, isTablet } = config;
   
   // Scale factors for different screen sizes
   const fontSizeScale = isMobile ? 0.8 : isTablet ? 0.9 : 1.0;
