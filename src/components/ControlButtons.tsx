@@ -1,51 +1,53 @@
 import React from 'react';
+import { GAME_CONSTANTS } from '../constants';
 
 interface ControlButtonsProps {
   onRollClick: () => void;
   onResetClick: () => void;
   isRolling: boolean;
   availableToSpin: boolean;
+  balance: number;
 }
 
 const ControlButtons: React.FC<ControlButtonsProps> = ({ 
   onRollClick, 
   onResetClick, 
   isRolling, 
-  availableToSpin 
+  availableToSpin,
+  balance
 }) => {
+  const isDisabled = balance < GAME_CONSTANTS.ROLL_COST || isRolling || !availableToSpin;
   return (
     <>
-      {/* Dice Roll Button */}
       <pixiGraphics
         x={100}
         y={200}
         draw={(g) => {
           g.clear();
-          g.fill(0x4a90e2);
+          g.fill(isDisabled ? 0x666666 : 0x4a90e2);
           g.rect(0, 0, 120, 40);
           g.fill();
-          g.stroke({ color: 0xffffff, width: 2 });
+          g.stroke({ color: isDisabled ? 0x999999 : 0xffffff, width: 2 });
           g.rect(0, 0, 120, 40);
           g.stroke();
         }}
-        eventMode='static'
-        onPointerDown={onRollClick}
-        cursor='pointer'
+        eventMode={isDisabled ? 'none' : 'static'}
+        onPointerDown={isDisabled ? undefined : onRollClick}
+        cursor={isDisabled ? 'default' : 'pointer'}
       />
 
       <pixiText
-        text={"Roll dice"}
+        text={"Spin"}
         x={160}
         y={220}
         anchor={{ x: 0.5, y: 0.5 }}
         style={{
           fontSize: 16,
-          fill: '#ffffff',
+          fill: isDisabled ? '#cccccc' : '#ffffff',
           fontFamily: 'Arial',
         }}
       />
 
-      {/* Reset Button */}
       <pixiGraphics
         x={240}
         y={200}

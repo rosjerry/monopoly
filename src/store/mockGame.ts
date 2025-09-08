@@ -1,17 +1,23 @@
 import { create } from 'zustand';
 import type { BoardCell, GameStateResponse } from '../api/types';
+import { 
+  GAME_CONSTANTS, 
+  generateBoardNumbers, 
+  canAffordRoll, 
+  calculateNewBalance 
+} from '../constants';
 
 function createInitialBoard(): BoardCell[] {
-  const numbers: number[] = Array.from({ length: 15 }, (_, i) => (i + 1) * 5);
+  const numbers = generateBoardNumbers();
   
   const shuffled = [...numbers].sort(() => Math.random() - 0.5);
   
-  const insertIndex = Math.floor(Math.random() * 16);
+  const insertIndex = Math.floor(Math.random() * GAME_CONSTANTS.BOARD_SIZE);
   
   const result: BoardCell[] = [];
   let numberIndex = 0;
   
-  for (let i = 0; i < 16; i += 1) {
+  for (let i = 0; i < GAME_CONSTANTS.BOARD_SIZE; i += 1) {
     if (i === insertIndex) {
       result.push('bonus');
     } else {
@@ -40,7 +46,7 @@ type MockGameState = GameStateResponse & {
 const initialRegular = createInitialBoard();
 
 export const useMockGameStore = create<MockGameState>((set, get) => ({
-  balance: 100,
+  balance: GAME_CONSTANTS.INITIAL_BALANCE,
   dice_result: null,
   last_prize_won: null,
   available_to_spin: true,
@@ -51,13 +57,13 @@ export const useMockGameStore = create<MockGameState>((set, get) => ({
   currentIndex: 0,
   roll: () => {
     const state = get();
-    if (!state.bonus_mode && state.balance < 50) {
+    if (!state.bonus_mode && !canAffordRoll(state.balance)) {
       set({ available_to_spin: false });
       return;
     }
 
-    const d1 = Math.floor(Math.random() * 6) + 1;
-    const d2 = Math.floor(Math.random() * 6) + 1;
+    const d1 = Math.floor(Math.random() * GAME_CONSTANTS.DICE_MAX_VALUE) + GAME_CONSTANTS.DICE_MIN_VALUE;
+    const d2 = Math.floor(Math.random() * GAME_CONSTANTS.DICE_MAX_VALUE) + GAME_CONSTANTS.DICE_MIN_VALUE;
     const sum = d1 + d2;
 
     const board = state.bonus_mode && state.bonus_mode_board
@@ -70,9 +76,9 @@ export const useMockGameStore = create<MockGameState>((set, get) => ({
     if (prize === 'bonus' && !state.bonus_mode) {
       const multiplied = state.regular_mode_board.map((v) => {
         if (v === 'bonus') {
-          return 500;
+          return GAME_CONSTANTS.BONUS_MODE_PRIZE;
         } else if (typeof v === 'number') {
-          return v * 10;
+          return v * GAME_CONSTANTS.BONUS_MODE_MULTIPLIER;
         } else {
           console.warn('Unexpected board cell value:', v);
           return 0;
@@ -87,7 +93,7 @@ export const useMockGameStore = create<MockGameState>((set, get) => ({
         last_prize_won: 0,
         available_to_spin: true,
         bonus_mode: true,
-        freespin_amount: 3,
+        freespin_amount: GAME_CONSTANTS.BONUS_MODE_FREE_SPINS,
         bonus_mode_board: multiplied,
         currentIndex: state.currentIndex,
       });
@@ -111,20 +117,19 @@ export const useMockGameStore = create<MockGameState>((set, get) => ({
       return;
     }
 
-    const cost = 50;
     const won = typeof prize === 'number' ? prize : 0;
-    const newBalance = state.balance - cost + won;
+    const newBalance = calculateNewBalance(state.balance, won);
     set({
       dice_result: [d1, d2],
       last_prize_won: won,
       balance: newBalance,
-      available_to_spin: newBalance > 50,
+      available_to_spin: canAffordRoll(newBalance),
       currentIndex: targetIndex,
     });
   },
   reset: () => {
     set({
-      balance: 100,
+      balance: GAME_CONSTANTS.INITIAL_BALANCE,
       dice_result: null,
       last_prize_won: null,
       available_to_spin: true,

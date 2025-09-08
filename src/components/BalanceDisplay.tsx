@@ -8,7 +8,6 @@ interface BalanceDisplayProps {
 const BalanceDisplay: React.FC<BalanceDisplayProps> = ({ balance, balanceDelta }) => {
   return (
     <>
-      {/* Balance Display */}
       <pixiText
         text={`Balance: ${balance}`}
         x={100}
@@ -22,7 +21,6 @@ const BalanceDisplay: React.FC<BalanceDisplayProps> = ({ balance, balanceDelta }
         }}
       />
 
-      {/* Balance delta */}
       {balanceDelta && (
         <pixiText
           text={`${balanceDelta.value > 0 ? '+' : ''}${balanceDelta.value}`}

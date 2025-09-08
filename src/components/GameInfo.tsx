@@ -9,7 +9,6 @@ interface GameInfoProps {
 const GameInfo: React.FC<GameInfoProps> = ({ board, currentIndex, isMockMode }) => {
   return (
     <>
-      {/* Board Mode Display */}
       <pixiText
         text={`Board Mode: ${isMockMode ? 'Mock' : 'Real'}`}
         x={300}
@@ -22,7 +21,6 @@ const GameInfo: React.FC<GameInfoProps> = ({ board, currentIndex, isMockMode }) 
         }}
       />
 
-      {/* Selected Cell Display */}
       {board && (
         <pixiText
           text={`Current Square: ${board[currentIndex]}`}

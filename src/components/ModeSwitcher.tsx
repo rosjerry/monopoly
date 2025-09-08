@@ -19,7 +19,6 @@ const ModeSwitcher: React.FC<ModeSwitcherProps> = ({
 }) => {
   return (
     <>
-      {/* Floating mode switch button (bottom-right) */}
       <pixiGraphics
         x={window.innerWidth - 80}
         y={window.innerHeight - 80}
@@ -44,10 +43,8 @@ const ModeSwitcher: React.FC<ModeSwitcherProps> = ({
         style={{ fontSize: 12, fill: '#ecf0f1', fontFamily: 'Arial', fontWeight: 'bold' }}
       />
 
-      {/* Mode popup */}
       {showModePopup && (
         <>
-          {/* overlay */}
           <pixiGraphics
             x={0}
             y={0}
@@ -60,7 +57,6 @@ const ModeSwitcher: React.FC<ModeSwitcherProps> = ({
             eventMode='static'
             onPointerDown={onCancelModeSwitch}
           />
-          {/* dialog */}
           <pixiGraphics
             x={window.innerWidth / 2 - 180}
             y={window.innerHeight / 2 - 100}
@@ -90,7 +86,6 @@ const ModeSwitcher: React.FC<ModeSwitcherProps> = ({
               style={{ fontSize: 14, fill: '#ffcc00', fontFamily: 'Arial' }}
             />
           )}
-          {/* buttons */}
           <pixiGraphics
             x={window.innerWidth / 2 - 120}
             y={window.innerHeight / 2 + 20}

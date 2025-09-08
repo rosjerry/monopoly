@@ -3,6 +3,7 @@ import { Texture } from 'pixi.js';
 import { gsap } from 'gsap';
 import { useGameController } from './hooks/useGameController';
 import { useNavigate, useSearchParams } from 'react-router';
+import { GAME_CONSTANTS } from './constants';
 import { 
   BalanceDisplay, 
   ControlButtons, 
@@ -97,7 +98,7 @@ function Scene() {
     if (isRolling || !game.availableToSpin) return;
     setIsRolling(true);
 
-    setBalanceDelta({ value: -50, color: '#ff6b6b' });
+    setBalanceDelta({ value: -GAME_CONSTANTS.ROLL_COST, color: '#ff6b6b' });
 
     startDiceSpin();
     game.roll();
@@ -168,6 +169,7 @@ function Scene() {
         onResetClick={handleResetClick}
         isRolling={isRolling}
         availableToSpin={game.availableToSpin}
+        balance={game.balance}
       />
       
       <DiceDisplay
