@@ -1,4 +1,4 @@
-import { useCallback, useMemo, useState } from 'react';
+import { useCallback, useState } from 'react';
 import { useSearchParams } from 'react-router';
 
 export type BoardCell = number | 'bonus';
@@ -24,7 +24,6 @@ function shuffleArray<T>(input: T[]): T[] {
 }
 
 function createMockBoard(): BoardCell[] {
-	// 15 numbers divisible by 5 in range 5..75 inclusive
 	const numbers: number[] = Array.from({ length: 15 }, (_, idx) => (idx + 1) * 5);
 	const shuffledNumbers = shuffleArray(numbers);
 	// Insert "bonus" at a random position among 16 cells
@@ -64,7 +63,7 @@ export const useBoardState = (): UseBoardStateReturn => {
 	}, []);
 
 	const fetchBoardFromBackend = useCallback(async (): Promise<BoardCell[]> => {
-		const response = await fetch('http://localhost:3001/board');
+		const response = await fetch('http://localhost:3002/board');
 		if (!response.ok) {
 			throw new Error(`HTTP error! status: ${response.status}`);
 		}
