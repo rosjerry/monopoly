@@ -1,5 +1,5 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { getMakeBet, postResetGame } from './client';
+import { getMakeBet, postResetGame, postRoll } from './client';
 import type { GameStateResponse } from './types';
 
 export const queryKeys = {
@@ -18,10 +18,10 @@ export function useGameStateQuery() {
 export function useSpinMutation() {
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: getMakeBet,
-    onSuccess: (data) => {
-      qc.setQueryData(queryKeys.game, data);
-    },
+    mutationFn: postRoll,
+    onSuccess: async () => {
+      await qc.invalidateQueries({ queryKey: queryKeys.game });
+    }
   });
 }
 

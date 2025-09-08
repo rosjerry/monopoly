@@ -17,4 +17,8 @@ export const getActiveBoard = (state: GameStateResponse): BoardCell[] => {
     : state.regular_mode_board;
 };
 
+export interface RollResponse {
+  dice_result: [number, number];
+}
+
 

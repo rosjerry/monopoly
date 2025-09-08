@@ -1,17 +1,27 @@
 import { useEffect, useRef, useState } from 'react';
 import { Texture, Assets } from 'pixi.js';
 import { Howl } from 'howler';
+import { gsap } from 'gsap';
 import { useGameController } from './hooks/useGameController';
 
 function Scene() {
   const [audioTexture, setAudioTexture] = useState<Texture | null>(null);
   const [audioEnabled, setAudioEnabled] = useState<boolean>(false);
-  const [selectedIndex] = useState<number>(0);
+  const [currentIndex, setCurrentIndex] = useState<number>(0);
+  const [isRolling, setIsRolling] = useState<boolean>(false);
+  const [isSpinningDice, setIsSpinningDice] = useState<boolean>(false);
+  const [displayDice, setDisplayDice] = useState<[number, number] | null>(null);
+  const [diceTextures, setDiceTextures] = useState<Record<number, Texture> | null>(null);
+  const tickerHandlerRef = useRef<((time: number) => void) | null>(null);
+  const [balanceDelta, setBalanceDelta] = useState<{ value: number; color: string } | null>(null);
   const hoverSoundRef = useRef<Howl | null>(null);
   const bgmSoundRef = useRef<Howl | null>(null);
   const graphicsRef = useRef<any>(null);
   const audioSpriteRef = useRef<any>(null);
   const audioTextRef = useRef<any>(null);
+  const dice1Ref = useRef<any>(null);
+  const dice2Ref = useRef<any>(null);
+  const diceTweensRef = useRef<{ t1: gsap.core.Tween | null; t2: gsap.core.Tween | null }>({ t1: null, t2: null });
 
   const game = useGameController();
 
@@ -68,9 +78,127 @@ function Scene() {
 
   useEffect(() => {
     if (!game.board) return;
-    const value = game.board[selectedIndex];
+    const value = game.board[currentIndex];
     console.log('Selected board cell:', value);
-  }, [game.board, selectedIndex]);
+  }, [game.board, currentIndex]);
+
+  // Map dice face to asset path
+  const diceTextureFor = (n: number) => {
+    if (!diceTextures) return null;
+    return diceTextures[n];
+  };
+
+  useEffect(() => {
+    let mounted = true;
+    const paths: Record<number, string> = {
+      1: '/assets/main/dice/iaqe.png',
+      2: '/assets/main/dice/du.png',
+      3: '/assets/main/dice/se.png',
+      4: '/assets/main/dice/chari.png',
+      5: '/assets/main/dice/fanji.png',
+      6: '/assets/main/dice/shashi.png',
+    };
+    Promise.all(Object.values(paths).map((p) => Assets.load(p))).then(() => {
+      if (!mounted) return;
+      const map: Record<number, Texture> = {
+        1: Texture.from(paths[1]),
+        2: Texture.from(paths[2]),
+        3: Texture.from(paths[3]),
+        4: Texture.from(paths[4]),
+        5: Texture.from(paths[5]),
+        6: Texture.from(paths[6]),
+      };
+      setDiceTextures(map);
+      // ensure placeholders visible before first roll
+      setDisplayDice([1, 1]);
+    });
+    return () => {
+      mounted = false;
+    };
+  }, []);
+
+  const startDiceSpin = () => {
+    if (tickerHandlerRef.current) return;
+    setIsSpinningDice(true);
+    const handler = () => {
+      const d1 = Math.floor(Math.random() * 6) + 1;
+      const d2 = Math.floor(Math.random() * 6) + 1;
+      setDisplayDice([d1, d2]);
+    };
+    tickerHandlerRef.current = handler;
+    gsap.ticker.add(handler);
+    // start rotation tweens
+    if (dice1Ref.current && dice2Ref.current) {
+      diceTweensRef.current.t1 = gsap.to(dice1Ref.current, { rotation: '+=6.283', duration: 0.4, repeat: -1, ease: 'none' });
+      diceTweensRef.current.t2 = gsap.to(dice2Ref.current, { rotation: '+=6.283', duration: 0.45, repeat: -1, ease: 'none' });
+    }
+  };
+
+  const stopDiceSpin = () => {
+    if (tickerHandlerRef.current) {
+      gsap.ticker.remove(tickerHandlerRef.current);
+      tickerHandlerRef.current = null;
+    }
+    setIsSpinningDice(false);
+    // stop rotation tweens
+    if (diceTweensRef.current.t1) {
+      diceTweensRef.current.t1.kill();
+      diceTweensRef.current.t1 = null;
+    }
+    if (diceTweensRef.current.t2) {
+      diceTweensRef.current.t2.kill();
+      diceTweensRef.current.t2 = null;
+    }
+  };
+
+  const animatePawnSteps = async (steps: number) => {
+    return new Promise<void>((resolve) => {
+      const tl = gsap.timeline({ onComplete: resolve });
+      for (let i = 1; i <= steps; i += 1) {
+        tl.to({}, {
+          duration: 0.12,
+          onComplete: () => setCurrentIndex((prev) => (prev + 1) % 16),
+          ease: 'power1.inOut',
+        });
+      }
+    });
+  };
+
+  const handleRollClick = async () => {
+    if (isRolling || !game.availableToSpin) return;
+    setIsRolling(true);
+
+    // show -50 immediately
+    setBalanceDelta({ value: -50, color: '#ff6b6b' });
+
+    startDiceSpin();
+    // trigger backend/mock roll
+    game.roll();
+
+    // wait 1s for spin animation (regardless of network)
+    await new Promise((r) => setTimeout(r, 1000));
+
+    stopDiceSpin();
+
+    // use the latest dice result from controller
+    const dice = game.dice;
+    if (dice) setDisplayDice(dice);
+
+    // animate pawn movement based on dice
+    const steps = dice ? dice[0] + dice[1] : 0;
+    if (steps > 0) await animatePawnSteps(steps);
+
+    // show +win after move
+    if (typeof game.lastPrize === 'number' && game.lastPrize > 0) {
+      setBalanceDelta({ value: game.lastPrize, color: '#00e676' });
+      // clear delta after a moment
+      setTimeout(() => setBalanceDelta(null), 1200);
+    } else {
+      setTimeout(() => setBalanceDelta(null), 800);
+    }
+
+    setIsRolling(false);
+  };
 
   const toggleAudio = () => {
     const newAudioState = !audioEnabled;
@@ -143,7 +271,7 @@ function Scene() {
           g.stroke();
         }}
         eventMode='static'
-        onPointerDown={() => game.roll()}
+        onPointerDown={handleRollClick}
         cursor='pointer'
       />
 
@@ -158,6 +286,46 @@ function Scene() {
           fontFamily: 'Arial',
         }}
       />
+
+      {/* Balance delta */}
+      {balanceDelta && (
+        <pixiText
+          text={`${balanceDelta.value > 0 ? '+' : ''}${balanceDelta.value}`}
+          x={250}
+          y={80}
+          anchor={{ x: 0, y: 0.5 }}
+          style={{
+            fontSize: 20,
+            fill: balanceDelta.color,
+            fontFamily: 'Arial',
+            fontWeight: 'bold',
+          }}
+        />
+      )}
+
+      {/* Dice display */}
+      {diceTextures && displayDice && (
+        <>
+          <pixiSprite
+            ref={dice1Ref}
+            texture={diceTextureFor(displayDice[0])!}
+            x={200}
+            y={460}
+            anchor={{ x: 0.5, y: 0.5 }}
+            width={56}
+            height={56}
+          />
+          <pixiSprite
+            ref={dice2Ref}
+            texture={diceTextureFor(displayDice[1])!}
+            x={280}
+            y={460}
+            anchor={{ x: 0.5, y: 0.5 }}
+            width={56}
+            height={56}
+          />
+        </>
+      )}
 
       <pixiGraphics
         x={240}
@@ -203,7 +371,7 @@ function Scene() {
       {/* Selected Cell Display */}
       {game.board && (
         <pixiText
-          text={`Selected: ${game.board[selectedIndex]}`}
+          text={`Selected: ${game.board[currentIndex]}`}
           x={300}
           y={140}
           anchor={{ x: 0, y: 0.5 }}
@@ -274,7 +442,7 @@ function Scene() {
                   const x = startX + col * total;
                   const y = startY + row * total;
                   const isBonus = cell === 'bonus';
-                  const isSelected = index === selectedIndex;
+                  const isSelected = index === currentIndex;
                   return (
                     <>
                       <pixiGraphics
