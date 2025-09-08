@@ -22,6 +22,7 @@ function Scene() {
   const dice1Ref = useRef<any>(null);
   const dice2Ref = useRef<any>(null);
   const diceTweensRef = useRef<{ t1: gsap.core.Tween | null; t2: gsap.core.Tween | null }>({ t1: null, t2: null });
+  const justResetRef = useRef<boolean>(false);
 
   const game = useGameController();
 
@@ -82,6 +83,23 @@ function Scene() {
     console.log('Selected board cell:', value);
   }, [game.board, currentIndex]);
 
+  // Sync pawn position to last known prize from backend when not animating
+  useEffect(() => {
+    if (justResetRef.current) return; // skip if we just reset
+    if (!game.board || game.lastPrize == null || isRolling) return;
+    const idx = game.board.findIndex((cell) => typeof cell === 'number' && cell === game.lastPrize);
+    if (idx >= 0) setCurrentIndex(idx);
+  }, [game.board, game.lastPrize, isRolling]);
+
+  // After a backend reset, keep pawn at start when new board arrives
+  useEffect(() => {
+    if (!game.board) return;
+    if (justResetRef.current) {
+      setCurrentIndex(0);
+      justResetRef.current = false;
+    }
+  }, [game.board]);
+
   // Map dice face to asset path
   const diceTextureFor = (n: number) => {
     if (!diceTextures) return null;
@@ -109,13 +127,20 @@ function Scene() {
         6: Texture.from(paths[6]),
       };
       setDiceTextures(map);
-      // ensure placeholders visible before first roll
-      setDisplayDice([1, 1]);
+      // initialize with last known dice from backend if present
+      if (game.dice) setDisplayDice(game.dice);
     });
     return () => {
       mounted = false;
     };
-  }, []);
+  }, [game.dice]);
+
+  // keep displayed dice in sync with backend results when not spinning
+  useEffect(() => {
+    if (!isSpinningDice && game.dice && diceTextures) {
+      setDisplayDice(game.dice);
+    }
+  }, [game.dice, isSpinningDice, diceTextures]);
 
   const startDiceSpin = () => {
     if (tickerHandlerRef.current) return;
@@ -212,6 +237,15 @@ function Scene() {
         bgm.stop();
       }
     }
+  };
+
+  const handleResetClick = () => {
+    // On backend mode, start from first square
+    if (!game.isMockMode) {
+      setCurrentIndex(0);
+      justResetRef.current = true;
+    }
+    game.reset();
   };
 
   return (
@@ -340,7 +374,7 @@ function Scene() {
           g.stroke();
         }}
         eventMode='static'
-        onPointerDown={() => game.reset()}
+        onPointerDown={handleResetClick}
         cursor='pointer'
       />
       <pixiText
