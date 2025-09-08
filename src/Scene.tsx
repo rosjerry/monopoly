@@ -29,6 +29,20 @@ function Scene() {
     console.log('Selected board cell:', value);
   }, [game.board, currentIndex]);
 
+  // Add refresh warning for mock mode
+  useEffect(() => {
+    if (!game.isMockMode) return;
+
+    const handleBeforeUnload = (e: BeforeUnloadEvent) => {
+      e.preventDefault();
+      e.returnValue = 'You will lose your mock game state if you refresh. Are you sure you want to continue?';
+      return 'You will lose your mock game state if you refresh. Are you sure you want to continue?';
+    };
+
+    window.addEventListener('beforeunload', handleBeforeUnload);
+    return () => window.removeEventListener('beforeunload', handleBeforeUnload);
+  }, [game.isMockMode]);
+
   // Sync pawn position to last known prize from backend when not animating
   useEffect(() => {
     if (justResetRef.current) return; // skip if we just reset
@@ -549,6 +563,7 @@ function Scene() {
           />
         </>
       )}
+
     </pixiContainer>
   );
 }
