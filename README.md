@@ -1,30 +1,42 @@
-before running frontend side of monopoly, please clone and runn backend repo first:
-clone repo from https://github.com/rosjerry/monopoly-fake-api
+# Monopoly Game
 
-read repo's readme or follow these steps:
+## Backend Setup (Required First)
 
-go to project directory and
-install node modules
+Before running the frontend side of Monopoly, please clone and run the backend repo first:
 
-npm install
+Clone repo from: https://github.com/rosjerry/monopoly-fake-api
 
-then launc a database
-npm run db
+Read the repo's README or follow these steps:
 
-then run project
-npm run start
+1. Go to project directory and install node modules:
+   ```bash
+   npm install
+   ```
 
-----
+2. Launch the database:
+   ```bash
+   npm run db
+   ```
 
-now run frontend (this repo)
+3. Run the project:
+   ```bash
+   npm run start
+   ```
 
-install node modules
-run:
-npm install
+---
 
-run project
-run:
-npm run dev
+## Frontend Setup (This Repo)
 
-project will be run on port 3001
+Now run the frontend:
 
+1. Install node modules:
+   ```bash
+   npm install
+   ```
+
+2. Run the project:
+   ```bash
+   npm run dev
+   ```
+
+The project will run on port **5173** (not 3001).
